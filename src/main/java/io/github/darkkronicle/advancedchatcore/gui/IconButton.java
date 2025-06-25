@@ -72,7 +72,7 @@ public class IconButton extends CleanButton {
         RenderUtils.drawRect(x, y, width, height, plusBack.color());
 
         RenderUtils.color(1, 1, 1, 1);
-        RenderUtils.bindTexture(icon);
+        RenderUtils.bindGuiTexture(icon, context);
         context.drawTexture(RenderLayer::getGuiTextured, icon, x + padding, y + padding, 0, 0, 
                 width - (padding * 2), height - (padding * 2), iconWidth, iconHeight, iconWidth, iconHeight);
 

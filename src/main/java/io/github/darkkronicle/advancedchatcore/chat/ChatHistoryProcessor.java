@@ -7,11 +7,11 @@
  */
 package io.github.darkkronicle.advancedchatcore.chat;
 
+import fi.dy.masa.malilib.util.data.Color4f;
 import io.github.darkkronicle.advancedchatcore.AdvancedChatCore;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
 import io.github.darkkronicle.advancedchatcore.interfaces.IMessageProcessor;
 import io.github.darkkronicle.advancedchatcore.mixin.MixinChatHudInvoker;
-import io.github.darkkronicle.advancedchatcore.util.Color;
 import io.github.darkkronicle.advancedchatcore.util.SearchUtils;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -65,9 +65,9 @@ public class ChatHistoryProcessor implements IMessageProcessor {
                             ConfigStorage.General.TIME_FORMAT.config.getStringValue());
             String replaceFormat =
                     ConfigStorage.General.TIME_TEXT_FORMAT.config.getStringValue().replaceAll("&", "§");
-            Color color = ConfigStorage.General.TIME_COLOR.config.get();
+            Color4f color = ConfigStorage.General.TIME_COLOR.config.getColor();
             Style style = Style.EMPTY;
-            TextColor textColor = TextColor.fromRgb(color.color());
+            TextColor textColor = TextColor.fromRgb(color.getIntValue());
             style = style.withColor(textColor);
             text.getSiblings().addFirst(Text.literal(replaceFormat.replaceAll("%TIME%", time.format(format))).fillStyle(style));
         }

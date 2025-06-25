@@ -86,32 +86,31 @@ public class WidgetRegistryOptionEntry<T extends ConfigRegistryOption<?>>
                     this.y,
                     this.width,
                     this.height,
-                    Colors.getInstance().getColorOrWhite("white").withAlpha(150).color());
+                    0xFFFFFF96);
         } else if (this.isOdd) {
             RenderUtils.drawRect(
                     this.x,
                     this.y,
                     this.width,
                     this.height,
-                    Colors.getInstance().getColorOrWhite("white").withAlpha(70).color());
+                    0xFFFFFF46);
         } else {
             RenderUtils.drawRect(
                     this.x,
                     this.y,
                     this.width,
                     this.height,
-                    Colors.getInstance().getColorOrWhite("white").withAlpha(50).color());
+                    0xFFFFFF32);
         }
         String name = this.option.getDisplayName();
         this.drawString(
                 this.x + 4,
                 this.y + 7,
-                Colors.getInstance().getColorOrWhite("white").color(),
+                0xFFFFFFFF,
                 name,
                 context);
 
         RenderUtils.color(1f, 1f, 1f, 1f);
-        RenderSystem.disableBlend();
 
         super.render(mouseX, mouseY, selected, context);
 

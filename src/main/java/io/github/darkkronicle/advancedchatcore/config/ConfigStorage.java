@@ -23,11 +23,8 @@ import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 import io.github.darkkronicle.advancedchatcore.AdvancedChatCore;
-import io.github.darkkronicle.advancedchatcore.config.options.ConfigColor;
 import io.github.darkkronicle.advancedchatcore.interfaces.ConfigRegistryOption;
 import io.github.darkkronicle.advancedchatcore.util.AbstractRegistry;
-import io.github.darkkronicle.advancedchatcore.util.Color;
-import io.github.darkkronicle.advancedchatcore.util.Colors;
 import io.github.darkkronicle.advancedchatcore.util.EasingMethod;
 import java.io.File;
 import java.io.FileInputStream;
@@ -75,7 +72,7 @@ public class ConfigStorage implements IConfigHandler {
                         "time_color",
                         new ConfigColor(
                                 translate("timecolor"),
-                                Colors.getInstance().getColor("white").get(),
+                                "#FFFFFFFF",
                                 translate("info.timecolor")));
 
         public static final SaveableConfig<ConfigBoolean> SHOW_TIME =
@@ -177,7 +174,7 @@ public class ConfigStorage implements IConfigHandler {
                         "color",
                         new ConfigColor(
                                 translate("color"),
-                                Colors.getInstance().getColor("black").get().withAlpha(100),
+                                "#64000000",
                                 translate("info.color")));
 
         public static final SaveableConfig<ConfigBoolean> MORE_TEXT =
@@ -196,25 +193,25 @@ public class ConfigStorage implements IConfigHandler {
                 SaveableConfig.fromConfig(
                         "modified",
                         new ConfigColor(
-                                translate("modified"), new Color(15386724), translate("info.modified")));
+                                translate("modified"), "#FFEAC864", translate("info.modified")));
 
         public static final SaveableConfig<ConfigColor> SYSTEM =
                 SaveableConfig.fromConfig(
                         "system",
                         new ConfigColor(
-                                translate("system"), new Color(10526880), translate("info.system")));
+                                translate("system"), "#FFA0A0A0", translate("info.system")));
 
         public static final SaveableConfig<ConfigColor> FILTERED =
                 SaveableConfig.fromConfig(
                         "filtered",
                         new ConfigColor(
-                                translate("filtered"), new Color(15386724), translate("info.filtered")));
+                                translate("filtered"), "#FFEAC864", translate("info.filtered")));
 
         public static final SaveableConfig<ConfigColor> NOT_SECURE =
                 SaveableConfig.fromConfig(
                         "notSecure",
                         new ConfigColor(
-                                translate("notsecure"), new Color(15224664), translate("info.notsecure")));
+                                translate("notsecure"), "#FFE84F58", translate("info.notsecure")));
 
 
         public static final ImmutableList<SaveableConfig<? extends IConfigBase>> OPTIONS =

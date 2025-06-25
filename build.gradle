@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.8.11'
+	id 'fabric-loom' version '1.10.5'
 	id 'maven-publish'
 	id 'io.freefair.lombok' version '8.10'
 }
@@ -95,7 +95,7 @@ jar {
 tasks.register('downloadExtra') {
 	def f = new File('./src/main/resources/swear_words.csv')
 	if (!f.exists()) {
-		new URL('https://raw.githubusercontent.com/surge-ai/profanity/main/profanity_en.csv').withInputStream{ i -> f.withOutputStream{ it << i }}
+		new URL('https://huggingface.co/datasets/mmathys/profanity/resolve/main/profanity_en.csv').withInputStream{ i -> f.withOutputStream{ it << i }}
 	}
 }
 

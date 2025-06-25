@@ -16,6 +16,8 @@ import io.github.darkkronicle.advancedchatcore.util.StringInsert;
 import io.github.darkkronicle.advancedchatcore.util.StringMatch;
 import io.github.darkkronicle.advancedchatcore.util.StyleFormatter;
 import io.github.darkkronicle.advancedchatcore.util.TextUtil;
+
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,7 +78,7 @@ public class MessageDispatcher {
                                         url = "https://" + url;
                                     }
                                     if (current.getStyle().getClickEvent() == null) {
-                                        return Text.literal(match1.match).fillStyle(current.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url)));
+                                        return Text.literal(match1.match).fillStyle(current.getStyle().withClickEvent(new ClickEvent.OpenUrl(URI.create(url))));
                                     }
                                     return MutableText.of(current.getContent()).fillStyle(current.getStyle());
                                 });

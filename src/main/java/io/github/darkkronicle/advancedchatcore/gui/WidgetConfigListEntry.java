@@ -7,7 +7,6 @@
  */
 package io.github.darkkronicle.advancedchatcore.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
 import fi.dy.masa.malilib.gui.widgets.WidgetBase;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntryBase;
@@ -20,7 +19,6 @@ import lombok.Setter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
 
 @Environment(EnvType.CLIENT)
 public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TYPE> {
@@ -90,7 +88,6 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
         renderEntry(mouseX, mouseY, selected, context);
 
         RenderUtils.color(1f, 1f, 1f, 1f);
-        RenderSystem.disableBlend();
 
         this.drawTextFields(mouseX, mouseY, context);
 

@@ -10,12 +10,12 @@ package io.github.darkkronicle.advancedchatcore.chat;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.util.KeyCodes;
+import fi.dy.masa.malilib.util.data.Color4f;
 import io.github.darkkronicle.advancedchatcore.AdvancedChatCore;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
 import io.github.darkkronicle.advancedchatcore.config.gui.GuiConfigHandler;
 import io.github.darkkronicle.advancedchatcore.gui.IconButton;
 import io.github.darkkronicle.advancedchatcore.interfaces.AdvancedChatScreenSection;
-import io.github.darkkronicle.advancedchatcore.util.Color;
 import io.github.darkkronicle.advancedchatcore.util.RowList;
 import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
@@ -23,7 +23,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -95,8 +94,8 @@ public class AdvancedChatScreen extends GuiBase {
         }
     }
 
-    private Color getColor() {
-        return ConfigStorage.ChatScreen.COLOR.config.get();
+    private Color4f getColor() {
+        return ConfigStorage.ChatScreen.COLOR.config.getColor();
     }
 
     public void resetCurrentMessage() {
@@ -396,11 +395,6 @@ public class AdvancedChatScreen extends GuiBase {
         if (style != null && style.getHoverEvent() != null) {
             context.drawHoverEvent(textRenderer, style, mouseX, mouseY);
         }
-    }
-
-    @Override
-    protected void drawScreenBackground(int mouseX, int mouseY) {
-
     }
 
     @Override

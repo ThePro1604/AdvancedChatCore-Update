@@ -7,21 +7,27 @@
  */
 package io.github.darkkronicle.advancedchatcore.chat;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.buffers.BufferType;
+import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import fi.dy.masa.malilib.util.KeyCodes;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
-import io.github.darkkronicle.advancedchatcore.util.StringMatch;
-import io.github.darkkronicle.advancedchatcore.util.StyleFormatter;
-import io.github.darkkronicle.advancedchatcore.util.TextBuilder;
-import io.github.darkkronicle.advancedchatcore.util.TextUtil;
+import io.github.darkkronicle.advancedchatcore.util.*;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.ShaderProgramKeys;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.*;
+import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -30,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.function.BiFunction;
 
 import static net.minecraft.client.gui.screen.Screen.hasControlDown;
@@ -179,7 +187,7 @@ public class AdvancedTextField extends TextFieldWidget {
         }
         int x = getX();
         int y = getY()    ;
-        context.fill(getX() - 2, renderY - 2, getX() + width + 4, getY() + height + 4, ConfigStorage.ChatScreen.COLOR.config.get().color());
+        context.fill(getX() - 2, renderY - 2, getX() + width + 4, getY() + height + 4, ConfigStorage.ChatScreen.COLOR.config.getIntegerValue());
         for (int line = 0; line < renderLines.size(); line++) {
             Text text = renderLines.get(line);
             if (cursor >= charCount && cursor < text.getString().length() + charCount) {
@@ -250,21 +258,72 @@ public class AdvancedTextField extends TextFieldWidget {
         if (x1 > x + this.width) {
             x1 = x + this.width;
         }
-        Tessellator tessellator = Tessellator.getInstance();
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-        RenderSystem.setShaderColor(0.0f, 0.0f, 1.0f, 1.0f);
-//        RenderSystem.disableTexture();
-        RenderSystem.enableColorLogicOp();
-        RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
-        BufferBuilder builder = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-        builder.vertex(x1, y2, 0.0f)
-                .vertex(x2, y2, 0.0f)
-                .vertex(x2, y1, 0.0f)
-                .vertex(x1, y1, 0.0f);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-        RenderSystem.disableColorLogicOp();
-//        RenderSystem.enableTexture();
+
+        int bufferSize = VertexFormats.POSITION_COLOR.getVertexSize() * 88;
+        RenderSystem.ShapeIndexBuffer widgetIndices = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
+        BufferAllocator byteBufferBuilder = new BufferAllocator(bufferSize);
+        GpuBuffer widgetBuffer;
+
+        try {
+            BufferBuilder builder = new BufferBuilder(byteBufferBuilder, VertexFormat.DrawMode.QUADS,
+                    VertexFormats.POSITION_COLOR);
+            builder.vertex(x1, y2, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f)
+                    .vertex(x2, y2, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f)
+                    .vertex(x2, y1, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f)
+                    .vertex(x1, y1, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f);
+            BuiltBuffer meshData = builder.end();
+
+            try {
+                widgetBuffer = RenderSystem.getDevice().createBuffer(() -> "Text field buffer",
+                        BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.getBuffer());
+            } catch (Throwable t1) {
+                try {
+                    meshData.close();
+                } catch (Throwable t2) {
+                    t1.addSuppressed(t2);
+                }
+                throw t1;
+            }
+            meshData.close();
+
+        } catch (Throwable t3) {
+            try {
+                byteBufferBuilder.close();
+            } catch (Throwable t4) {
+                t3.addSuppressed(t4);
+            }
+            throw t3;
+        }
+        byteBufferBuilder.close();
+
+        RenderPipeline renderPipeline = RenderPipelines.GUI_OVERLAY;
+        RenderSystem.setShaderColor(0.0F, 0.0F, 0.0F, 1.0F);
+        Framebuffer renderTarget = MinecraftClient.getInstance().getFramebuffer();
+        GpuTexture colorTexture = renderTarget.getColorAttachment();
+        GpuTexture depthTexture = renderTarget.getDepthAttachment();
+        GpuBuffer gpuBuffer = widgetIndices.getIndexBuffer(bufferSize);
+        @SuppressWarnings("DataFlowIssue")
+        RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+                colorTexture, OptionalInt.empty(), depthTexture, OptionalDouble.empty());
+
+        try {
+            renderPass.setPipeline(renderPipeline);
+            renderPass.setUniform("LineWidth", 4.0F);
+            renderPass.setVertexBuffer(0, widgetBuffer);
+            renderPass.setIndexBuffer(gpuBuffer, widgetIndices.getIndexType());
+            renderPass.drawIndexed(0, bufferSize);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            renderPass.setUniform("LineWidth", 2.0F);
+            renderPass.drawIndexed(0, bufferSize);
+        } catch (Throwable t1) {
+            try {
+                renderPass.close();
+            } catch (Throwable t2) {
+                t1.addSuppressed(t2);
+            }
+            throw t1;
+        }
+        renderPass.close();
     }
 
     @Override
