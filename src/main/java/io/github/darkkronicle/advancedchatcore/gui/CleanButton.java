@@ -47,7 +47,7 @@ public class CleanButton extends ButtonBase {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext context) {
+    public void render(DrawContext context, int mouseX, int mouseY, boolean selected) {
         int relMX = mouseX - x;
         int relMY = mouseY - y;
         hovered = relMX >= 0 && relMX <= width && relMY >= 0 && relMY <= height;
@@ -57,10 +57,10 @@ public class CleanButton extends ButtonBase {
         }
         RenderUtils.drawRect(x, y, width, height, color.color());
         drawCenteredString(
+                context,
                 (x + (width / 2)),
                 (y + (height / 2) - 3),
                 Colors.getInstance().getColorOrWhite("white").color(),
-                displayString,
-                context);
+                displayString);
     }
 }

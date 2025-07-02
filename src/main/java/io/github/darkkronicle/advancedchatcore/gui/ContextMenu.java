@@ -87,7 +87,7 @@ public class ContextMenu extends WidgetBase {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext context) {
+    public void render(DrawContext context, int mouseX, int mouseY, boolean selected) {
         drawRect(context, x, y, width, height, background.color());
         int rX = x + 2;
         int rY = y + 2;

@@ -35,8 +35,8 @@ public class WidgetLabelHoverable extends WidgetLabel {
 
     @Override
     public void postRenderHovered(
-            int mouseX, int mouseY, boolean selected, DrawContext context) {
-        super.postRenderHovered(mouseX, mouseY, selected, context);
+            DrawContext context, int mouseX, int mouseY, boolean selected) {
+        super.postRenderHovered(context, mouseX, mouseY, selected);
 
         if (hoverLines == null) {
             return;
@@ -46,7 +46,7 @@ public class WidgetLabelHoverable extends WidgetLabel {
                 && mouseX < this.x + this.width
                 && mouseY >= this.y
                 && mouseY <= this.y + this.height) {
-            RenderUtils.drawHoverText(mouseX, mouseY, this.hoverLines, context);
+            RenderUtils.drawHoverText(context, mouseX, mouseY, this.hoverLines);
         }
     }
 }

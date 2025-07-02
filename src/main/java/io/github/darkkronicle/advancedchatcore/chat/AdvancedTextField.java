@@ -7,19 +7,21 @@
  */
 package io.github.darkkronicle.advancedchatcore.chat;
 
-import com.mojang.blaze3d.buffers.BufferType;
-import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import fi.dy.masa.malilib.util.KeyCodes;
+import io.github.darkkronicle.advancedchatcore.AdvancedChatCore;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
 import io.github.darkkronicle.advancedchatcore.util.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.DynamicUniforms;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -33,12 +35,18 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.BiFunction;
+import java.util.logging.Logger;
 
 import static net.minecraft.client.gui.screen.Screen.hasControlDown;
 
@@ -165,7 +173,7 @@ public class AdvancedTextField extends TextFieldWidget {
 
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        int color = 0xE0E0E0;
+        int color = 0xFFE0E0E0;
         int cursor = getCursor();
         int cursorRow = renderLines.size() - 1;
         boolean renderCursor = this.isFocused() && focusedTicks / 6 % 2 == 0;
@@ -194,7 +202,8 @@ public class AdvancedTextField extends TextFieldWidget {
                 cursorX = textRenderer.getWidth(text.getString().substring(0, cursor - charCount));
                 cursorRow = line;
             }
-            endX = context.drawTextWithShadow(textRenderer, text, x, renderY, color);
+            endX = x + textRenderer.getWidth(text);
+            context.drawTextWithShadow(textRenderer, text, x, renderY, color);
             if (selection) {
                 if (!started && selStart >= charCount && selStart <= text.getString().length() + charCount) {
                     started = true;
@@ -202,19 +211,19 @@ public class AdvancedTextField extends TextFieldWidget {
                     if (selEnd > charCount && selEnd <= text.getString().length() + charCount) {
                         ended = true;
                         int sEndX = textRenderer.getWidth(TextUtil.truncate(text, new StringMatch("", 0, selEnd - charCount)));
-                        drawSelectionHighlight(x + startX, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        drawSelectionHighlight(context, x + startX, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
                     } else {
                         int sEndX = textRenderer.getWidth(text);
-                        drawSelectionHighlight(x + startX, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        drawSelectionHighlight(context, x + startX, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
                     }
                 } else if (started && !ended) {
                     if (selEnd >= charCount && selEnd <= text.getString().length() + charCount) {
                         ended = true;
                         int sEndX = textRenderer.getWidth(TextUtil.truncate(text, new StringMatch("", 0, selEnd - charCount)));
-                        drawSelectionHighlight(x, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        drawSelectionHighlight(context, x, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
                     } else {
                         int sEndX = textRenderer.getWidth(text);
-                        drawSelectionHighlight(x, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        drawSelectionHighlight(context, x, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
                     }
                 }
             }
@@ -238,7 +247,7 @@ public class AdvancedTextField extends TextFieldWidget {
         }
     }
 
-    private void drawSelectionHighlight(int x1, int y1, int x2, int y2) {
+    private void drawSelectionHighlight(DrawContext context, int x1, int y1, int x2, int y2) {
         int x = getX();
         int y = getY();
         int i;
@@ -259,71 +268,7 @@ public class AdvancedTextField extends TextFieldWidget {
             x1 = x + this.width;
         }
 
-        int bufferSize = VertexFormats.POSITION_COLOR.getVertexSize() * 88;
-        RenderSystem.ShapeIndexBuffer widgetIndices = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
-        BufferAllocator byteBufferBuilder = new BufferAllocator(bufferSize);
-        GpuBuffer widgetBuffer;
-
-        try {
-            BufferBuilder builder = new BufferBuilder(byteBufferBuilder, VertexFormat.DrawMode.QUADS,
-                    VertexFormats.POSITION_COLOR);
-            builder.vertex(x1, y2, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f)
-                    .vertex(x2, y2, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f)
-                    .vertex(x2, y1, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f)
-                    .vertex(x1, y1, 0.0f).color(0.0f, 0.0f, 1.0f, 1.0f);
-            BuiltBuffer meshData = builder.end();
-
-            try {
-                widgetBuffer = RenderSystem.getDevice().createBuffer(() -> "Text field buffer",
-                        BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.getBuffer());
-            } catch (Throwable t1) {
-                try {
-                    meshData.close();
-                } catch (Throwable t2) {
-                    t1.addSuppressed(t2);
-                }
-                throw t1;
-            }
-            meshData.close();
-
-        } catch (Throwable t3) {
-            try {
-                byteBufferBuilder.close();
-            } catch (Throwable t4) {
-                t3.addSuppressed(t4);
-            }
-            throw t3;
-        }
-        byteBufferBuilder.close();
-
-        RenderPipeline renderPipeline = RenderPipelines.GUI_OVERLAY;
-        RenderSystem.setShaderColor(0.0F, 0.0F, 0.0F, 1.0F);
-        Framebuffer renderTarget = MinecraftClient.getInstance().getFramebuffer();
-        GpuTexture colorTexture = renderTarget.getColorAttachment();
-        GpuTexture depthTexture = renderTarget.getDepthAttachment();
-        GpuBuffer gpuBuffer = widgetIndices.getIndexBuffer(bufferSize);
-        @SuppressWarnings("DataFlowIssue")
-        RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-                colorTexture, OptionalInt.empty(), depthTexture, OptionalDouble.empty());
-
-        try {
-            renderPass.setPipeline(renderPipeline);
-            renderPass.setUniform("LineWidth", 4.0F);
-            renderPass.setVertexBuffer(0, widgetBuffer);
-            renderPass.setIndexBuffer(gpuBuffer, widgetIndices.getIndexType());
-            renderPass.drawIndexed(0, bufferSize);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            renderPass.setUniform("LineWidth", 2.0F);
-            renderPass.drawIndexed(0, bufferSize);
-        } catch (Throwable t1) {
-            try {
-                renderPass.close();
-            } catch (Throwable t2) {
-                t1.addSuppressed(t2);
-            }
-            throw t1;
-        }
-        renderPass.close();
+        context.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, 0xFF0000FF);
     }
 
     @Override

@@ -76,8 +76,7 @@ public class WidgetRegistryOptionEntry<T extends ConfigRegistryOption<?>>
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext context) {
-        RenderUtils.color(1f, 1f, 1f, 1f);
+    public void render(DrawContext context, int mouseX, int mouseY, boolean selected) {
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY)) {
@@ -104,23 +103,19 @@ public class WidgetRegistryOptionEntry<T extends ConfigRegistryOption<?>>
         }
         String name = this.option.getDisplayName();
         this.drawString(
+                context,
                 this.x + 4,
                 this.y + 7,
                 0xFFFFFFFF,
-                name,
-                context);
+                name);
 
-        RenderUtils.color(1f, 1f, 1f, 1f);
-
-        super.render(mouseX, mouseY, selected, context);
-
-        RenderUtils.disableDiffuseLighting();
+        super.render(context, mouseX, mouseY, selected);
     }
 
     @Override
     public void postRenderHovered(
-            int mouseX, int mouseY, boolean selected, DrawContext context) {
-        super.postRenderHovered(mouseX, mouseY, selected, context);
+            DrawContext context, int mouseX, int mouseY, boolean selected) {
+        super.postRenderHovered(context, mouseX, mouseY, selected);
 
         if (hoverLines == null) {
             return;
@@ -129,7 +124,7 @@ public class WidgetRegistryOptionEntry<T extends ConfigRegistryOption<?>>
                 && mouseX < this.buttonStartX
                 && mouseY >= this.y
                 && mouseY <= this.y + this.height) {
-            RenderUtils.drawHoverText(mouseX, mouseY, this.hoverLines, context);
+            RenderUtils.drawHoverText(context, mouseX, mouseY, this.hoverLines);
         }
     }
 

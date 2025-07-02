@@ -58,8 +58,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
     }
 
     @Override
-    public void render(int mouseX, int mouseY, boolean selected, DrawContext context) {
-        RenderUtils.color(1f, 1f, 1f, 1f);
+    public void render(DrawContext context, int mouseX, int mouseY, boolean selected) {
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY)) {
@@ -85,35 +84,31 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
                     Colors.getInstance().getColorOrWhite("white").withAlpha(50).color());
         }
 
-        renderEntry(mouseX, mouseY, selected, context);
-
-        RenderUtils.color(1f, 1f, 1f, 1f);
+        renderEntry(context, mouseX, mouseY, selected);
 
         this.drawTextFields(mouseX, mouseY, context);
 
-        super.render(mouseX, mouseY, selected, context);
-
-        RenderUtils.disableDiffuseLighting();
+        super.render(context, mouseX, mouseY, selected);
     }
 
     /**
      * Render's in the middle of the rendering cycle. After the background, but before it goes to
      * super.
      */
-    public void renderEntry(int mouseX, int mouseY, boolean selected, DrawContext context) {
+    public void renderEntry(DrawContext context, int mouseX, int mouseY, boolean selected) {
         String name = getName();
         this.drawString(
+                context,
                 this.x + 4,
                 this.y + 7,
                 Colors.getInstance().getColorOrWhite("white").color(),
-                name,
-                context);
+                name);
     }
 
     @Override
     public void postRenderHovered(
-            int mouseX, int mouseY, boolean selected, DrawContext context) {
-        super.postRenderHovered(mouseX, mouseY, selected, context);
+            DrawContext context, int mouseX, int mouseY, boolean selected) {
+        super.postRenderHovered(context, mouseX, mouseY, selected);
         if (hoverLines == null) {
             return;
         }
@@ -122,7 +117,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
                 && mouseX < this.buttonStartX
                 && mouseY >= this.y
                 && mouseY <= this.y + this.height) {
-            RenderUtils.drawHoverText(mouseX, mouseY, this.hoverLines, context);
+            RenderUtils.drawHoverText(context, mouseX, mouseY, this.hoverLines);
         }
     }
 
