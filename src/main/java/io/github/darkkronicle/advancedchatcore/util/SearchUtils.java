@@ -219,7 +219,7 @@ public class SearchUtils {
                 // Easy mode
                 if ((e.getDisplayName() != null
                                 && m.match.equals(stripColorCodes(e.getDisplayName().getString())))
-                        || m.match.equals(e.getProfile().getName())) {
+                        || m.match.equals(e.getProfile().name())) {
                     player = e;
                     match = m;
                     break;
@@ -232,7 +232,7 @@ public class SearchUtils {
             String name =
                     stripColorCodes(
                             e.getDisplayName() == null
-                                    ? e.getProfile().getName()
+                                    ? e.getProfile().name()
                                     : e.getDisplayName().getString());
             Optional<List<StringMatch>> nameWords =
                     SearchUtils.findMatches(

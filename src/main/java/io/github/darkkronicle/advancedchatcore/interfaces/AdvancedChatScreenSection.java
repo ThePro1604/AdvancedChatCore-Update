@@ -9,7 +9,9 @@ package io.github.darkkronicle.advancedchatcore.interfaces;
 
 import io.github.darkkronicle.advancedchatcore.chat.AdvancedChatScreen;
 import lombok.Getter;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.Drawable;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.math.MatrixStack;
 
 /**
@@ -56,7 +58,7 @@ public abstract class AdvancedChatScreenSection implements Drawable {
      * @param modifiers Modifiers
      * @return If it was handled and should stop.
      */
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         return false;
     }
 
@@ -80,7 +82,7 @@ public abstract class AdvancedChatScreenSection implements Drawable {
      * @param button Mouse button
      * @return If it was handled and should stop.
      */
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         return false;
     }
 
@@ -92,7 +94,7 @@ public abstract class AdvancedChatScreenSection implements Drawable {
      * @param mouseButton Mouse button
      * @return If it was handled and should stop.
      */
-    public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseReleased(Click click) {
         return false;
     }
 
@@ -104,8 +106,7 @@ public abstract class AdvancedChatScreenSection implements Drawable {
      * @param deltaY
      * @return If it was handled and should stop.
      */
-    public boolean mouseDragged(
-            double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double deltaX, double deltaY) {
         return false;
     }
 

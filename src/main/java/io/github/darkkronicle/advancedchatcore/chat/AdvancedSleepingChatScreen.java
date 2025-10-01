@@ -11,10 +11,12 @@ import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.StringUtils;
+import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 
-public class AdvancedSleepingChatScreen extends AdvancedChatScreen {
+public class AdvancedSleepingChatScreen extends AdvancedChatScreen  {
 
     public AdvancedSleepingChatScreen() {
         super("");
@@ -36,10 +38,10 @@ public class AdvancedSleepingChatScreen extends AdvancedChatScreen {
         this.stopSleeping();
     }
 
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == KeyCodes.KEY_ESCAPE) {
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == KeyCodes.KEY_ESCAPE) {
             this.stopSleeping();
-        } else if (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_KP_ENTER) {
+        } else if (input.key() == KeyCodes.KEY_ENTER || input.key() == KeyCodes.KEY_KP_ENTER) {
             String string = this.chatField.getText().trim();
             if (!string.isEmpty()) {
                 MessageSender.getInstance().sendMessage(string);
@@ -52,7 +54,7 @@ public class AdvancedSleepingChatScreen extends AdvancedChatScreen {
             return true;
         }
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     private void stopSleeping() {

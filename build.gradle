@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.10.5'
+	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 	id 'io.freefair.lombok' version '8.10'
 }
@@ -30,6 +30,7 @@ repositories {
 	maven { url 'https://maven.terraformersmc.com/releases/' }
 	maven { url 'https://jitpack.io' }
 	maven { url 'https://maven.wispforest.io' }
+    maven { url 'https://maven.fallenbreath.me/releases' }
 }
 
 dependencies {

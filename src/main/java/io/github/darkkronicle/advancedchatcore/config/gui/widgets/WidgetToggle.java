@@ -9,6 +9,7 @@ package io.github.darkkronicle.advancedchatcore.config.gui.widgets;
 
 import fi.dy.masa.malilib.gui.button.ButtonOnOff;
 import lombok.Getter;
+import net.minecraft.client.gui.Click;
 
 public class WidgetToggle extends ButtonOnOff {
 
@@ -27,10 +28,10 @@ public class WidgetToggle extends ButtonOnOff {
     }
 
     @Override
-    protected boolean onMouseClickedImpl(int mouseX, int mouseY, int mouseButton) {
+    protected boolean onMouseClickedImpl(Click click, boolean doubled) {
         this.currentlyOn = !this.currentlyOn;
         this.updateDisplayString(this.currentlyOn);
-        return super.onMouseClickedImpl(mouseX, mouseY, mouseButton);
+        return super.onMouseClickedImpl(click, doubled);
     }
 
     public void setOn(boolean on) {

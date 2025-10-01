@@ -7,38 +7,35 @@
  */
 package io.github.darkkronicle.advancedchatcore.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import io.github.darkkronicle.advancedchatcore.chat.AdvancedChatScreen;
 import io.github.darkkronicle.advancedchatcore.chat.AdvancedSleepingChatScreen;
-import io.github.darkkronicle.advancedchatcore.chat.ChatHistory;
-import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.client.gui.screen.ChatScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Environment(EnvType.CLIENT)
 @Mixin(MinecraftClient.class)
 public class MixinMinecraftClient {
 
-    @Inject(method = "openChatScreen(Ljava/lang/String;)V",
+    @Inject(method = "openChatScreen",
             at = @At(value = "HEAD"), cancellable = true)
-    public void openChatScreen(String text, CallbackInfo ci) {
-        MinecraftClient.getInstance().setScreen(new AdvancedChatScreen(text));
+    public void openChatScreen(ChatHud.ChatMethod method, CallbackInfo ci) {
+        MinecraftClient.getInstance().setScreen(new AdvancedChatScreen(method.getReplacement()));
         ci.cancel();
     }
 
-    @ModifyArg(method = "tick()V",
+    @WrapOperation(method = "tick",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1))
-    public Screen openSleepingChatScreen(@Nullable Screen screen) {
-        return new AdvancedSleepingChatScreen();
+                    target = "Lnet/minecraft/client/gui/hud/ChatHud;setClientScreen(Lnet/minecraft/client/gui/hud/ChatHud$ChatMethod;Lnet/minecraft/client/gui/screen/ChatScreen$Factory;)V"))
+    public void openSleepingChatScreen(ChatHud instance, ChatHud.ChatMethod method, ChatScreen.Factory<?> factory, Operation<Void> original) {
+        MinecraftClient.getInstance().setScreen(new AdvancedSleepingChatScreen());
     }
 }

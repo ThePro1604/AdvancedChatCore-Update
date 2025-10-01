@@ -7,48 +7,26 @@
  */
 package io.github.darkkronicle.advancedchatcore.chat;
 
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.RenderPass;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import fi.dy.masa.malilib.util.KeyCodes;
-import io.github.darkkronicle.advancedchatcore.AdvancedChatCore;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
 import io.github.darkkronicle.advancedchatcore.util.*;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.DynamicUniforms;
-import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.render.*;
-import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
 import java.util.function.BiFunction;
-import java.util.logging.Logger;
-
-import static net.minecraft.client.gui.screen.Screen.hasControlDown;
 
 public class AdvancedTextField extends TextFieldWidget {
 
@@ -99,19 +77,14 @@ public class AdvancedTextField extends TextFieldWidget {
     }
 
     @Override
-    public void setRenderTextProvider(BiFunction<String, Integer, OrderedText> renderTextProvider) {
-        this.renderTextProvider = renderTextProvider;
-    }
-
-    @Override
     public void setMaxLength(int maxLength) {
         this.maxLength = maxLength;
         super.setMaxLength(maxLength);
     }
 
-    public static boolean isUndo(int code) {
+    public static boolean isUndo(KeyInput input) {
         // Undo (Ctrl + Z)
-        return code == KeyCodes.KEY_Z && hasControlDown() && !Screen.hasAltDown();
+        return input.key() == KeyCodes.KEY_Z && input.hasCtrl() && !input.hasAlt();
     }
 
     /** Triggers undo for the text box */
@@ -161,13 +134,13 @@ public class AdvancedTextField extends TextFieldWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
 
         int renderY = getY() - (renderLines.size() - 1) * (textRenderer.fontHeight + 2);
-        if (mouseY < renderY - 2 || mouseY > getY() + height + 2 || mouseX < getX() - 2 || mouseX > getX() + width + 4) {
+        if (click.button() < renderY - 2 || click.y() > getY() + height + 2 || click.x() < getX() - 2 || click.x() > getX() + width + 4) {
             return false;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
 
@@ -353,14 +326,14 @@ public class AdvancedTextField extends TextFieldWidget {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (!this.isActive()) {
             return false;
         }
-        if (!isUndo(keyCode)) {
-            return super.keyPressed(keyCode, scanCode, modifiers);
+        if (!isUndo(input)) {
+            return super.keyPressed(input);
         }
-        if (Screen.hasShiftDown()) {
+        if (input.hasShift()) {
             redo();
         } else {
             undo();

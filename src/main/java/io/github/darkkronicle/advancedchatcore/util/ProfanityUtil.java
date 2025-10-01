@@ -47,8 +47,7 @@ public class ProfanityUtil {
     public void loadConfigs() {
         try {
             List<String> lines;
-            File file = FileUtils.getConfigDirectory()
-                    .toPath()
+            File file = FileUtils.getConfigDirectoryAsPath()
                     .resolve("advancedchat")
                     .resolve("swear_words.csv")
                     .toFile();

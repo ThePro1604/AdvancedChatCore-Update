@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 public class MixinSleepingChatScreen extends ChatScreen {
 
     public MixinSleepingChatScreen() {
-        super("");
+        super("", false);
     }
 
     @ModifyArg(method = "closeChatIfEmpty",

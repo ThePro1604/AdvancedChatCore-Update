@@ -48,8 +48,7 @@ public class Colors {
         palettes.clear();
 
         // Get file or create if it doesn't exist
-        File file = FileUtils.getConfigDirectory()
-                        .toPath()
+        File file = FileUtils.getConfigDirectoryAsPath()
                         .resolve("advancedchat")
                         .resolve("colors.toml")
                         .toFile();

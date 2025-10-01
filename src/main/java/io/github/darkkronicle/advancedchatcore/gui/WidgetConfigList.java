@@ -15,7 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 
 public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntry<TYPE>>
         extends WidgetListBase<TYPE, WIDGET> {
@@ -64,18 +66,18 @@ public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntr
     }
 
     @Override
-    public boolean onMouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean onMouseClicked(Click click, boolean doubled) {
         clearTextFieldFocus();
-        return super.onMouseClicked(mouseX, mouseY, mouseButton);
+        return super.onMouseClicked(click, doubled);
     }
 
     @Override
-    public boolean onKeyTyped(int keyCode, int scanCode, int modifiers) {
+    public boolean onKeyTyped(KeyInput input) {
         for (WidgetConfigListEntry<TYPE> widget : this.listWidgets) {
-            if (widget.onKeyTyped(keyCode, scanCode, modifiers)) {
+            if (widget.onKeyTyped(input)) {
                 return true;
             }
         }
-        return super.onKeyTyped(keyCode, scanCode, modifiers);
+        return super.onKeyTyped(input);
     }
 }
