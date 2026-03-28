@@ -10,7 +10,10 @@ package io.github.darkkronicle.advancedchatcore.mixin;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
+
+import java.util.List;
 
 @Mixin(ChatHud.class)
 public interface MixinChatHudInvoker {
@@ -19,4 +22,19 @@ public interface MixinChatHudInvoker {
 
     @Invoker("addMessage")
     void invokeAddMessage(ChatHudLine message);
+
+    @Accessor("visibleMessages")
+    List<ChatHudLine.Visible> getVisibleMessages();
+
+    @Invoker("getWidth")
+    int invokeGetWidth();
+
+    @Invoker("getLineHeight")
+    int invokeGetLineHeight();
+
+    @Invoker("isChatFocused")
+    boolean invokeIsChatFocused();
+
+    @Invoker("getChatScale")
+    double invokeGetChatScale();
 }

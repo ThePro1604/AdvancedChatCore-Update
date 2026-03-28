@@ -319,17 +319,13 @@ public class AdvancedChatScreen extends GuiBase {
             }
         }
         ChatHud hud = client.inGameHud.getChatHud();
-        // TODO: Fix ChatHud API changes in 1.21.11
-        // These methods no longer exist or have changed signatures
-        // if (hud.mouseClicked(click.x(), click.y(), 0)) {
-        //     return true;
-        // }
-        // Style style = hud.getTextStyleAt(hud.toChatLineX(click.x()), hud.toChatLineY(click.y()));
-        // if (style != null && style.getClickEvent() != null) {
-        //     if (this.handleComponentClicked(style)) {
-        //         return true;
-        //     }
-        // }
+        // Use our helper to get style at mouse position (replaces removed ChatHud methods)
+        Style style = io.github.darkkronicle.advancedchatcore.util.ChatHudHelper.getTextStyleAt(hud, click.x(), click.y());
+        if (style != null && style.getClickEvent() != null) {
+            // Use the static handleClickEvent method from Screen class
+            net.minecraft.client.gui.screen.Screen.handleClickEvent(style.getClickEvent(), this.client, this);
+            return true;
+        }
         return (this.chatField.mouseClicked(click, doubled)
                 || super.mouseClicked(click, doubled));
     }
@@ -397,11 +393,11 @@ public class AdvancedChatScreen extends GuiBase {
         for (AdvancedChatScreenSection section : sections) {
             section.render(drawContext, mouseX, mouseY, partialTicks);
         }
-        // TODO: Fix ChatHud API changes in 1.21.11
-        // Style style = hud.getTextStyleAt(hud.toChatLineX(mouseX), hud.toChatLineY(mouseY));
-        // if (style != null && style.getHoverEvent() != null) {
-        //     drawContext.drawHoverEvent(textRenderer, style, mouseX, mouseY);
-        // }
+        // Use our helper to get style at mouse position and draw hover tooltips
+        Style style = io.github.darkkronicle.advancedchatcore.util.ChatHudHelper.getTextStyleAt(hud, mouseX, mouseY);
+        if (style != null && style.getHoverEvent() != null) {
+            drawContext.drawHoverEvent(textRenderer, style, mouseX, mouseY);
+        }
     }
 
     @Override
