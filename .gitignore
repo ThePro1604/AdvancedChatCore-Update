@@ -12,3 +12,7 @@ classes/
 lombok.config
 extra.properties
 swear_words.csv
+
+# Temporary files
+temp_*.class
+*.tmp
