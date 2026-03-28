@@ -1,15 +1,15 @@
 package io.github.darkkronicle.advancedchatcore.gui;
 
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
+import net.minecraft.client.gui.Click;
 import io.github.darkkronicle.advancedchatcore.util.Color;
 import io.github.darkkronicle.advancedchatcore.util.Colors;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
@@ -61,7 +61,8 @@ public class IconButton extends CleanButton {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, boolean unused) {
+    public void render(GuiContext context, int mouseX, int mouseY, boolean unused) {
+        DrawContext drawContext = (DrawContext) (Object) context.getGuiGraphics();
         int relMX = mouseX - x;
         int relMY = mouseY - y;
         hovered = relMX >= 0 && relMX <= width && relMY >= 0 && relMY <= height;
@@ -73,12 +74,11 @@ public class IconButton extends CleanButton {
 
         RenderUtils.drawRect(x, y, width, height, plusBack.color());
 
-        RenderUtils.bindGpuTexture(icon);
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, icon, x + padding, y + padding, 0, 0,
+        drawContext.drawTexture(RenderPipelines.GUI_TEXTURED, icon, x + padding, y + padding, 0, 0,
                 width - (padding * 2), height - (padding * 2), iconWidth, iconHeight, iconWidth, iconHeight);
 
         if (hovered && onHover != null) {
-            context.drawCenteredTextWithShadow(
+            drawContext.drawCenteredTextWithShadow(
                     MinecraftClient.getInstance().textRenderer,
                     onHover,
                     mouseX + 4,

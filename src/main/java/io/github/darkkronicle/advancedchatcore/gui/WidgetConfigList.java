@@ -9,15 +9,15 @@ package io.github.darkkronicle.advancedchatcore.gui;
 
 import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
 import fi.dy.masa.malilib.gui.interfaces.ISelectionListener;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.KeyInput;
 import fi.dy.masa.malilib.gui.widgets.WidgetListBase;
 import fi.dy.masa.malilib.gui.wrappers.TextFieldWrapper;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.KeyInput;
 
 public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntry<TYPE>>
         extends WidgetListBase<TYPE, WIDGET> {
@@ -36,7 +36,6 @@ public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntr
         this.setParent(parent);
     }
 
-    @Override
     public void resize(MinecraftClient mc, int width, int height) {
         this.width = width;
         this.height = height;
@@ -56,7 +55,7 @@ public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntr
 
     protected void clearTextFieldFocus() {
         for (TextFieldWrapper<GuiTextFieldGeneric> field : this.textFields) {
-            GuiTextFieldGeneric textField = field.getTextField();
+            GuiTextFieldGeneric textField = field.textField();
 
             if (textField.isFocused()) {
                 textField.setFocused(false);

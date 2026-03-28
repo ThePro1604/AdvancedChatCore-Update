@@ -9,8 +9,12 @@ package io.github.darkkronicle.advancedchatcore.gui;
 
 import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
 import fi.dy.masa.malilib.gui.widgets.WidgetBase;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntryBase;
 import fi.dy.masa.malilib.gui.wrappers.TextFieldWrapper;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import io.github.darkkronicle.advancedchatcore.util.Colors;
 import java.util.List;
@@ -18,10 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
 
 @Environment(EnvType.CLIENT)
 public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TYPE> {
@@ -61,7 +62,8 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, boolean selected) {
+    public void render(GuiContext context, int mouseX, int mouseY, boolean selected) {
+        DrawContext drawContext = (DrawContext) (Object) context.getGuiGraphics();
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY)) {
@@ -89,7 +91,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
 
         renderEntry(context, mouseX, mouseY, selected);
 
-        this.drawTextFields(mouseX, mouseY, context);
+        this.drawTextFields(mouseX, mouseY, drawContext);
 
         super.render(context, mouseX, mouseY, selected);
     }
@@ -98,7 +100,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
      * Render's in the middle of the rendering cycle. After the background, but before it goes to
      * super.
      */
-    public void renderEntry(DrawContext context, int mouseX, int mouseY, boolean selected) {
+    public void renderEntry(GuiContext context, int mouseX, int mouseY, boolean selected) {
         String name = getName();
         this.drawString(
                 context,
@@ -110,7 +112,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
 
     @Override
     public void postRenderHovered(
-            DrawContext context, int mouseX, int mouseY, boolean selected) {
+            GuiContext context, int mouseX, int mouseY, boolean selected) {
         super.postRenderHovered(context, mouseX, mouseY, selected);
         if (hoverLines == null) {
             return;
@@ -161,7 +163,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
         if (getTextFields() != null) {
             for (TextFieldWrapper<GuiTextFieldGeneric> field : getTextFields()) {
                 if (field != null) {
-                    ret = field.getTextField().mouseClicked(click, doubled);
+                    ret = field.textField().mouseClicked(click, doubled);
                 }
             }
         }
@@ -182,7 +184,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
             return;
         }
         for (TextFieldWrapper<GuiTextFieldGeneric> field : getTextFields()) {
-            field.getTextField().render(context, mouseX, mouseY, 0f);
+            field.textField().render(context, mouseX, mouseY, 0f);
         }
     }
 }

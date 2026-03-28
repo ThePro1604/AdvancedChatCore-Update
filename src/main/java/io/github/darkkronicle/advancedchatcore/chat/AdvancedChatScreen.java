@@ -9,6 +9,10 @@ package io.github.darkkronicle.advancedchatcore.chat;
 
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
+import fi.dy.masa.malilib.render.GuiContext;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.data.Color4f;
 import io.github.darkkronicle.advancedchatcore.AdvancedChatCore;
@@ -20,11 +24,8 @@ import io.github.darkkronicle.advancedchatcore.util.ModifierKeyUtil;
 import io.github.darkkronicle.advancedchatcore.util.RowList;
 import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.MutableText;
@@ -192,7 +193,7 @@ public class AdvancedChatScreen extends GuiBase {
 
     public void resize(MinecraftClient client, int width, int height) {
         String string = this.chatField.getText();
-        this.init(client, width, height);
+        this.init(width, height);
         this.setText(string);
         for (AdvancedChatScreenSection section : sections) {
             section.resize(width, height);
@@ -318,15 +319,17 @@ public class AdvancedChatScreen extends GuiBase {
             }
         }
         ChatHud hud = client.inGameHud.getChatHud();
-        if (hud.mouseClicked(click.x(), click.y())) {
-            return true;
-        }
-        Style style = hud.getTextStyleAt(click.x(), click.y());
-        if (style != null && style.getClickEvent() != null) {
-            if (this.handleTextClick(style)) {
-                return true;
-            }
-        }
+        // TODO: Fix ChatHud API changes in 1.21.11
+        // These methods no longer exist or have changed signatures
+        // if (hud.mouseClicked(click.x(), click.y(), 0)) {
+        //     return true;
+        // }
+        // Style style = hud.getTextStyleAt(hud.toChatLineX(click.x()), hud.toChatLineY(click.y()));
+        // if (style != null && style.getClickEvent() != null) {
+        //     if (this.handleComponentClicked(style)) {
+        //         return true;
+        //     }
+        // }
         return (this.chatField.mouseClicked(click, doubled)
                 || super.mouseClicked(click, doubled));
     }
@@ -384,25 +387,26 @@ public class AdvancedChatScreen extends GuiBase {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float partialTicks) {
-        this.client.inGameHud.getChatHud().render(context, this.client.inGameHud.getTicks(), mouseX, mouseY, true);
+    protected void drawContents(GuiContext ctx, int mouseX, int mouseY, float partialTicks) {
+        DrawContext drawContext = (DrawContext) (Object) ctx.getGuiGraphics();
         ChatHud hud = client.inGameHud.getChatHud();
+        hud.render(drawContext, textRenderer, 0, mouseX, mouseY, true, false);
         this.setFocused(this.chatField);
         this.chatField.setFocused(true);
-        this.chatField.render(context, mouseX, mouseY, partialTicks);
-        super.render(context, mouseX, mouseY, partialTicks);
+        this.chatField.render(drawContext, mouseX, mouseY, partialTicks);
         for (AdvancedChatScreenSection section : sections) {
-            section.render(context, mouseX, mouseY, partialTicks);
+            section.render(drawContext, mouseX, mouseY, partialTicks);
         }
-        Style style = hud.getTextStyleAt(mouseX, mouseY);
-        if (style != null && style.getHoverEvent() != null) {
-            context.drawHoverEvent(textRenderer, style, mouseX, mouseY);
-        }
+        // TODO: Fix ChatHud API changes in 1.21.11
+        // Style style = hud.getTextStyleAt(hud.toChatLineX(mouseX), hud.toChatLineY(mouseY));
+        // if (style != null && style.getHoverEvent() != null) {
+        //     drawContext.drawHoverEvent(textRenderer, style, mouseX, mouseY);
+        // }
     }
 
     @Override
-    protected void drawScreenBackground(DrawContext drawContext, int mouseX, int mouseY) {
-        // Don't.
+    protected void drawScreenBackground(GuiContext ctx, int mouseX, int mouseY) {
+
     }
 
     private void setText(String text) {

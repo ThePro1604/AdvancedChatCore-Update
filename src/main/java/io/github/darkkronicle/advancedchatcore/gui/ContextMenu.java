@@ -1,12 +1,13 @@
 package io.github.darkkronicle.advancedchatcore.gui;
 
 import fi.dy.masa.malilib.gui.widgets.WidgetBase;
+import fi.dy.masa.malilib.render.GuiContext;
+import net.minecraft.client.gui.Click;
 import io.github.darkkronicle.advancedchatcore.util.Color;
 import io.github.darkkronicle.advancedchatcore.util.TextUtil;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
@@ -88,17 +89,18 @@ public class ContextMenu extends WidgetBase {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, boolean selected) {
-        drawRect(context, x, y, width, height, background.color());
+    public void render(GuiContext context, int mouseX, int mouseY, boolean selected) {
+        DrawContext drawContext = (DrawContext) (Object) context.getGuiGraphics();
+        drawRect(drawContext, x, y, width, height, background.color());
         int rX = x + 2;
         int rY = y + 2;
         hoveredEntry = null;
         for (Text option : options.keySet()) {
             if (mouseX >= x && mouseX <= x + width && mouseY >= rY - 2 && mouseY < rY + fontHeight + 1) {
                 hoveredEntry = option;
-                drawRect(context, rX - 2, rY - 2, width, textRenderer.fontHeight + 2, hover.color());
+                drawRect(drawContext, rX - 2, rY - 2, width, textRenderer.fontHeight + 2, hover.color());
             }
-            context.drawTextWithShadow(textRenderer, option, rX, rY, -1);
+            drawContext.drawTextWithShadow(textRenderer, option, rX, rY, -1);
             rY += textRenderer.fontHeight + 2;
         }
     }

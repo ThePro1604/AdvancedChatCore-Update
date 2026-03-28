@@ -8,6 +8,7 @@
 package io.github.darkkronicle.advancedchatcore.gui;
 
 import fi.dy.masa.malilib.gui.button.ButtonBase;
+import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
 import io.github.darkkronicle.advancedchatcore.util.Color;
 import io.github.darkkronicle.advancedchatcore.util.Colors;
@@ -17,7 +18,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
 
 /** A simple button */
 @EqualsAndHashCode(callSuper = false)
@@ -47,7 +47,8 @@ public class CleanButton extends ButtonBase {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, boolean selected) {
+    public void render(GuiContext context, int mouseX, int mouseY, boolean selected) {
+        DrawContext drawContext = (DrawContext) (Object) context.getGuiGraphics();
         int relMX = mouseX - x;
         int relMY = mouseY - y;
         hovered = relMX >= 0 && relMX <= width && relMY >= 0 && relMY <= height;

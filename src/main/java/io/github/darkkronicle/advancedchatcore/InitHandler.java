@@ -125,7 +125,7 @@ public class InitHandler implements IInitializationHandler {
             }
             client.currentScreen = new AdvancedChatScreen(true);
             client.mouse.unlockCursor();
-            client.currentScreen.init(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+            client.currentScreen.init(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
             client.skipGameRender = false;;
             client.updateWindowTitle();
             return true;
