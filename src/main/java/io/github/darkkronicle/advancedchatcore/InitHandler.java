@@ -46,19 +46,19 @@ public class InitHandler implements IInitializationHandler {
         MessageDispatcher.getInstance().register(new ChatHistoryProcessor(), -1);
 
         GuiConfigHandler.getInstance().addTab(
-                GuiConfigHandler.children(
-                        "advancedchatcore",
-                        "advancedchat.tab.advancedchatcore",
                 GuiConfigHandler.wrapOptions(
                         "core_general",
                         "advancedchatcore.tab.general",
                         ConfigStorage.General.OPTIONS.stream().map((saveableConfig) -> (IConfigBase) saveableConfig.config).toList()
-                ),
+                )
+        );
+
+        GuiConfigHandler.getInstance().addTab(
                 GuiConfigHandler.wrapOptions(
                         "chatscreen",
                         "advancedchatcore.tab.chatscreen",
                         ConfigStorage.ChatScreen.OPTIONS.stream().map((saveableConfig) -> (IConfigBase) saveableConfig.config).toList()
-                ))
+                )
         );
 
         ProfanityUtil.getInstance().loadConfigs();
