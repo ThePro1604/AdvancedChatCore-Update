@@ -50,8 +50,9 @@ public class AdvancedTextField extends TextFieldWidget {
     private int selectionStart;
     // TODO Split?
     private BiFunction<String, Integer, OrderedText> renderTextProvider = (string, firstCharacterIndex) -> {
-        // Convert & color codes to § section symbols and format them
-        String converted = string.replaceAll("&", "§");
+        // Convert & color codes to § section symbols only when followed by valid formatting character
+        // Valid characters: 0-9, a-f, k-o, r (color codes and formatting codes)
+        String converted = string.replaceAll("&([0-9a-fk-or])", "§$1");
         Text text = Text.literal(converted);
         Text formatted = StyleFormatter.formatText(text);
         return formatted.asOrderedText();
