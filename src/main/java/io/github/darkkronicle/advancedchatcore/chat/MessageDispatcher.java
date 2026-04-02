@@ -77,10 +77,9 @@ public class MessageDispatcher {
                                             match1.match, "(http(s)?:\\/\\/.)", FindType.REGEX)) {
                                         url = "https://" + url;
                                     }
-                                    if (current.getStyle().getClickEvent() == null) {
-                                        return Text.literal(match1.match).fillStyle(current.getStyle().withClickEvent(new ClickEvent.OpenUrl(URI.create(url))));
-                                    }
-                                    return MutableText.of(current.getContent()).fillStyle(current.getStyle());
+                                    // Always create the full matched text with the URL click event
+                                    // Don't return current.getContent() because current might be a partial segment
+                                    return Text.literal(match1.match).fillStyle(current.getStyle().withClickEvent(new ClickEvent.OpenUrl(URI.create(url))));
                                 });
                     }
                     text = TextUtil.replaceStrings(text, insert);

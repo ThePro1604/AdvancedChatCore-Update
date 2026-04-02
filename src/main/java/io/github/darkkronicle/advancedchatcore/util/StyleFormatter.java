@@ -192,8 +192,10 @@ public class StyleFormatter {
      * @return Formatted text
      */
     public static MutableText formatText(Text text) {
+        String originalString = text.getString();
         MutableText t = Text.empty();
-        int length = text.getString().length();
+        int length = originalString.length();
+
         StyleFormatter formatter =
                 new StyleFormatter(
                         (c, index, formattedIndex, style, formattedStyle) -> {
@@ -202,27 +204,39 @@ public class StyleFormatter {
                         },
                         length);
         text.visit(formatter::updateStyle, Style.EMPTY);
+
         return flattenText(t);
     }
 
     public static MutableText flattenText(Text text) {
-        List<Text> newSiblings = new ArrayList<>();
-        Style last = text.getStyle();
-        StringBuilder content = new StringBuilder(TextUtil.getContent(text.getContent()));
-        for (Text t : text.getSiblings()) {
-            if (t.getStyle().equals(last)) {
-                content.append(TextUtil.getContent(t.getContent()));
-                continue;
-            }
-            newSiblings.add(Text.literal(content.toString()).fillStyle(last));
-            content = new StringBuilder(TextUtil.getContent(t.getContent()));
-            last = t.getStyle();
-        }
-        newSiblings.add(Text.literal(content.toString()).fillStyle(last));
+        // Use TextBuilder which properly handles Text visiting to avoid losing content
+        TextBuilder builder = new TextBuilder();
+        builder.append(text);
+
         MutableText newText = Text.empty();
-        for (Text sibling : newSiblings) {
-            newText.append(sibling);
+        Style lastStyle = null;
+        StringBuilder accumulated = new StringBuilder();
+
+        for (RawText raw : builder.getTexts()) {
+            if (lastStyle == null) {
+                lastStyle = raw.getStyle();
+                accumulated.append(raw.getString());
+            } else if (raw.getStyle().equals(lastStyle)) {
+                accumulated.append(raw.getString());
+            } else {
+                if (accumulated.length() > 0) {
+                    newText.append(Text.literal(accumulated.toString()).fillStyle(lastStyle));
+                }
+                accumulated = new StringBuilder(raw.getString());
+                lastStyle = raw.getStyle();
+            }
         }
+
+        // Add any remaining accumulated text
+        if (accumulated.length() > 0 && lastStyle != null) {
+            newText.append(Text.literal(accumulated.toString()).fillStyle(lastStyle));
+        }
+
         return newText;
     }
 

@@ -157,6 +157,7 @@ public class TextUtil {
         int totalchar = 0;
         boolean inMatch = false;
         for (RawText text : new TextBuilder().append(input).getTexts()) {
+
             if (text.getString() == null || text.getString().length() <= 0) {
                 continue;
             }
