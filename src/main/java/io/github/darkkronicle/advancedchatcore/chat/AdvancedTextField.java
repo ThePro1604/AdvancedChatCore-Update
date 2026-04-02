@@ -49,7 +49,13 @@ public class AdvancedTextField extends TextFieldWidget {
     private int selectionEnd;
     private int selectionStart;
     // TODO Split?
-    private BiFunction<String, Integer, OrderedText> renderTextProvider = (string, firstCharacterIndex) -> OrderedText.styledForwardsVisitedString(string, Style.EMPTY);
+    private BiFunction<String, Integer, OrderedText> renderTextProvider = (string, firstCharacterIndex) -> {
+        // Convert & color codes to § section symbols and format them
+        String converted = string.replaceAll("&", "§");
+        Text text = Text.literal(converted);
+        Text formatted = StyleFormatter.formatText(text);
+        return formatted.asOrderedText();
+    };
 
     private int historyIndex = -1;
 
