@@ -7,9 +7,15 @@
  */
 package io.github.darkkronicle.advancedchatcore.chat;
 
+import com.mojang.brigadier.ParseResults;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.context.CommandContextBuilder;
+import com.mojang.brigadier.context.ParsedCommandNode;
+import com.mojang.brigadier.tree.CommandNode;
 import fi.dy.masa.malilib.util.KeyCodes;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
 import io.github.darkkronicle.advancedchatcore.util.*;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
@@ -17,10 +23,15 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.client.render.*;
+import net.minecraft.command.CommandSource;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +61,11 @@ public class AdvancedTextField extends TextFieldWidget {
     private int selectionStart;
     // TODO Split?
     private BiFunction<String, Integer, OrderedText> renderTextProvider = (string, firstCharacterIndex) -> {
+        // Check if the string starts with "/" to enable command highlighting
+        if (string.startsWith("/")) {
+            return highlightCommand(string);
+        }
+
         // Convert & color codes to § section symbols only when followed by valid formatting character
         // Valid characters: 0-9, a-f, k-o, r (color codes and formatting codes)
         String converted = string.replaceAll("&([0-9a-fk-or])", "§$1");
@@ -76,6 +92,72 @@ public class AdvancedTextField extends TextFieldWidget {
         history.add("");
         this.textRenderer = textRenderer;
         updateRender();
+    }
+
+    /**
+     * Highlights command syntax based on Brigadier parsing
+     * - Red for invalid commands
+     * - Light reddish for valid commands
+     * - Blue for arguments
+     */
+    private OrderedText highlightCommand(String input) {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        // If we don't have a network handler or command dispatcher, fall back to basic formatting
+        if (client.getNetworkHandler() == null || client.getNetworkHandler().getCommandDispatcher() == null) {
+            return Text.literal(input).asOrderedText();
+        }
+
+        // Create text builder for the result
+        Text result;
+
+        try {
+            // Remove the leading "/" for parsing
+            String command = input.substring(1);
+
+            // Parse the command using Brigadier
+            StringReader reader = new StringReader(command);
+            ParseResults<ClientCommandSource> parseResults = client.getNetworkHandler()
+                    .getCommandDispatcher()
+                    .parse(reader, client.getNetworkHandler().getCommandSource());
+
+            // Check if there are any parsed nodes (valid command path)
+            boolean hasValidCommand = !parseResults.getContext().getNodes().isEmpty();
+
+            // Colors for different parts
+            int errorColor = 0xFF5555;      // Red for errors
+            int commandColor = 0xFAB4B4;    // Light reddish for valid commands
+            int argumentColor = 0x6EFAE0;   // Blue for arguments
+
+            if (!hasValidCommand) {
+                // Invalid command - color everything in red
+                result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(errorColor)));
+            } else {
+                // Valid command - highlight parts differently
+                MutableText mutableText = Text.literal("/").styled(style -> style.withColor(TextColor.fromRgb(commandColor)));
+
+                // Get the command name (first word)
+                int firstSpaceIndex = command.indexOf(' ');
+                String commandName = firstSpaceIndex > 0 ? command.substring(0, firstSpaceIndex) : command;
+
+                // Color the command name
+                mutableText.append(Text.literal(commandName).styled(style -> style.withColor(TextColor.fromRgb(commandColor))));
+
+                // Color the rest (arguments) in blue
+                if (firstSpaceIndex > 0 && firstSpaceIndex < command.length()) {
+                    String arguments = command.substring(firstSpaceIndex);
+                    mutableText.append(Text.literal(arguments).styled(style -> style.withColor(TextColor.fromRgb(argumentColor))));
+                }
+
+                result = mutableText;
+            }
+        } catch (Exception e) {
+            // If parsing fails, color as error
+            int errorColor = 0xFF5555;
+            result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(errorColor)));
+        }
+
+        return result.asOrderedText();
     }
 
     //@Override
