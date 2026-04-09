@@ -213,9 +213,28 @@ public class ConfigStorage implements IConfigHandler {
                         new ConfigColor(
                                 translate("notsecure"), "#FFE84F58", translate("info.notsecure")));
 
+        public static final SaveableConfig<ConfigColor> COMMAND_SYNTAX_INVALID =
+                SaveableConfig.fromConfig(
+                        "commandSyntaxInvalid",
+                        new ConfigColor(
+                                translate("commandsyntaxinvalid"), "#FF5555", translate("info.commandsyntaxinvalid")));
+
+        public static final SaveableConfig<ConfigColor> COMMAND_SYNTAX_VALID =
+                SaveableConfig.fromConfig(
+                        "commandSyntaxValid",
+                        new ConfigColor(
+                                translate("commandsyntaxvalid"), "#FAB4B4", translate("info.commandsyntaxvalid")));
+
+        public static final SaveableConfig<ConfigColor> COMMAND_SYNTAX_ARGUMENTS =
+                SaveableConfig.fromConfig(
+                        "commandSyntaxArguments",
+                        new ConfigColor(
+                                translate("commandsyntaxarguments"), "#6EFAE0", translate("info.commandsyntaxarguments")));
+
 
         public static final ImmutableList<SaveableConfig<? extends IConfigBase>> OPTIONS =
-                ImmutableList.of(PERSISTENT_TEXT, COLOR, MORE_TEXT, SHOW_CHAT_ICONS, MODIFIED, SYSTEM, FILTERED, NOT_SECURE);
+                ImmutableList.of(PERSISTENT_TEXT, COLOR, MORE_TEXT, SHOW_CHAT_ICONS, MODIFIED, SYSTEM, FILTERED, NOT_SECURE,
+                        COMMAND_SYNTAX_INVALID, COMMAND_SYNTAX_VALID, COMMAND_SYNTAX_ARGUMENTS);
     }
 
     public static class Hotkeys {

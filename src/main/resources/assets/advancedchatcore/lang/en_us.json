@@ -65,6 +65,12 @@
   "advancedchat.config.chatscreen.info.system": "The color that system signed messages will be",
   "advancedchat.config.chatscreen.notsecure": "Not Secure Color",
   "advancedchat.config.chatscreen.info.notsecure": "The color that not secure signed messages will be",
+  "advancedchat.config.chatscreen.commandsyntaxinvalid": "Invalid Command Color",
+  "advancedchat.config.chatscreen.info.commandsyntaxinvalid": "The color used for §6invalid/non-existent commands§r in the chat input field",
+  "advancedchat.config.chatscreen.commandsyntaxvalid": "Valid Command Color",
+  "advancedchat.config.chatscreen.info.commandsyntaxvalid": "The color used for §6valid commands§r in the chat input field",
+  "advancedchat.config.chatscreen.commandsyntaxarguments": "Command Arguments Color",
+  "advancedchat.config.chatscreen.info.commandsyntaxarguments": "The color used for §6command arguments§r in the chat input field",
 
   "advancedchat.config.button.configure": "§bConfigure",
   "advancedchat.config.button.active": "%s",

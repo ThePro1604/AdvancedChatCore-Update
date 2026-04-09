@@ -107,6 +107,12 @@
   "advancedchat.config.chatscreen.info.moretext": "§6超过256字符限制§r的消息是否被分解为多条聊天消息",
   "advancedchat.config.chatscreen.sendtocurrenttab": "始终将消息发送到聚焦分页",
   "advancedchat.config.chatscreen.info.sendtocurrenttab": "无论§6聊天过滤器§r被如何配置，您发送的消息都将显示在当前聚焦分页中。",
+  "advancedchat.config.chatscreen.commandsyntaxinvalid": "无效命令颜色",
+  "advancedchat.config.chatscreen.info.commandsyntaxinvalid": "§6无效/不存在的命令§r在聊天输入框中显示的颜色",
+  "advancedchat.config.chatscreen.commandsyntaxvalid": "有效命令颜色",
+  "advancedchat.config.chatscreen.info.commandsyntaxvalid": "§6有效命令§r在聊天输入框中显示的颜色",
+  "advancedchat.config.chatscreen.commandsyntaxarguments": "命令参数颜色",
+  "advancedchat.config.chatscreen.info.commandsyntaxarguments": "§6命令参数§r在聊天输入框中显示的颜色",
 
   "advancedchat.config.chatlog.storedlines": "存储行数",
   "advancedchat.config.chatlog.info.storedlines": "§a聊天记录§r所能存储的§6最大§r行量§r\n§7过大的值可能会导致内存不足错误！ ",

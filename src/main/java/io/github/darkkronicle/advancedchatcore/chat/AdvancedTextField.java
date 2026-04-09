@@ -124,26 +124,26 @@ public class AdvancedTextField extends TextFieldWidget {
             // Check if there are any parsed nodes (valid command path)
             boolean hasValidCommand = !parseResults.getContext().getNodes().isEmpty();
 
-            // Colors for different parts
-            int errorColor = 0xFF5555;      // Red for errors
-            int commandColor = 0xFAB4B4;    // Light reddish for valid commands
-            int argumentColor = 0x6EFAE0;   // Blue for arguments
+            // Get colors from config
+            int invalidColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_INVALID.config.getIntegerValue();
+            int validColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_VALID.config.getIntegerValue();
+            int argumentColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_ARGUMENTS.config.getIntegerValue();
 
             if (!hasValidCommand) {
-                // Invalid command - color everything in red
-                result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(errorColor)));
+                // Invalid command - color everything with the configured invalid color
+                result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(invalidColor)));
             } else {
                 // Valid command - highlight parts differently
-                MutableText mutableText = Text.literal("/").styled(style -> style.withColor(TextColor.fromRgb(commandColor)));
+                MutableText mutableText = Text.literal("/").styled(style -> style.withColor(TextColor.fromRgb(validColor)));
 
                 // Get the command name (first word)
                 int firstSpaceIndex = command.indexOf(' ');
                 String commandName = firstSpaceIndex > 0 ? command.substring(0, firstSpaceIndex) : command;
 
-                // Color the command name
-                mutableText.append(Text.literal(commandName).styled(style -> style.withColor(TextColor.fromRgb(commandColor))));
+                // Color the command name with the configured valid color
+                mutableText.append(Text.literal(commandName).styled(style -> style.withColor(TextColor.fromRgb(validColor))));
 
-                // Color the rest (arguments) in blue
+                // Color the rest (arguments) with the configured argument color
                 if (firstSpaceIndex > 0 && firstSpaceIndex < command.length()) {
                     String arguments = command.substring(firstSpaceIndex);
                     mutableText.append(Text.literal(arguments).styled(style -> style.withColor(TextColor.fromRgb(argumentColor))));
@@ -152,9 +152,9 @@ public class AdvancedTextField extends TextFieldWidget {
                 result = mutableText;
             }
         } catch (Exception e) {
-            // If parsing fails, color as error
-            int errorColor = 0xFF5555;
-            result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(errorColor)));
+            // If parsing fails, color as error using the configured invalid color
+            int invalidColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_INVALID.config.getIntegerValue();
+            result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(invalidColor)));
         }
 
         return result.asOrderedText();
