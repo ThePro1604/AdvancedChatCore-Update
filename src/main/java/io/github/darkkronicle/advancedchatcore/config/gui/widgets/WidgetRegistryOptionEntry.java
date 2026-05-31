@@ -21,8 +21,8 @@ import io.github.darkkronicle.advancedchatcore.util.Colors;
 import java.util.List;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
 
 @Environment(EnvType.CLIENT)
 public class WidgetRegistryOptionEntry<T extends ConfigRegistryOption<?>>
@@ -76,7 +76,7 @@ public class WidgetRegistryOptionEntry<T extends ConfigRegistryOption<?>>
 
     @Override
     public void render(GuiContext context, int mouseX, int mouseY, boolean selected) {
-        DrawContext drawContext = (DrawContext) (Object) context.getGuiGraphics();
+        GuiGraphicsExtractor drawContext = (GuiGraphicsExtractor) (Object) context.getGuiGraphics();
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY)) {

@@ -15,39 +15,27 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Font;
 
 public class WidgetIntBox extends GuiTextFieldGeneric {
 
     @Setter @Getter private Runnable apply = null;
 
-    public WidgetIntBox(int x, int y, int width, int height, TextRenderer textRenderer) {
-        super(x, y, width, height, textRenderer);
-        this.setTextPredicate(
-                text -> {
-                    if (text.equals("")) {
-                        return true;
-                    }
-                    try {
-                        // Only allow numbers!
-                        Integer.valueOf(text);
-                    } catch (NumberFormatException e) {
-                        return false;
-                    }
-                    return true;
-                });
-        this.setDrawsBackground(true);
+    public WidgetIntBox(int x, int y, int width, int height, Font font) {
+        // TODO: verify GuiTextFieldGeneric constructor in malilib 26.1
+        super(x, y, width, height, font);
+        // TODO: verify setTextPredicate in malilib 26.1 (may be renamed or removed)
+        // TODO: verify setDrawsBackground in malilib 26.1
     }
 
     public Integer getInt() {
-        String text = this.getText();
+        String text = "" /* TODO: getText() malilib 26.1 */;
         if (text == null || text.length() == 0) {
             return null;
         }
         try {
             return Integer.parseInt(text);
         } catch (NumberFormatException e) {
-            // Extra catch
             Optional<List<StringMatch>> omatches =
                     SearchUtils.findMatches(text, "[0-9]+", FindType.REGEX);
             if (!omatches.isPresent()) {

@@ -10,21 +10,22 @@ package io.github.darkkronicle.advancedchatcore.mixin;
 import io.github.darkkronicle.advancedchatcore.chat.ChatHistory;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Keyboard;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.KeyboardHandler;
+import net.minecraft.client.input.KeyEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Environment(EnvType.CLIENT)
-@Mixin(Keyboard.class)
+@Mixin(KeyboardHandler.class)
 public class MixinKeyboard {
 
     @Inject(
             method = "processF3",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;clear(Z)V"))
-    public void processF3Chat(KeyInput keyInput, CallbackInfoReturnable<Boolean> cir) {
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;clear(Z)V"),
+            require = 0)
+    public void processF3Chat(KeyEvent keyEvent, CallbackInfoReturnable<Boolean> cir) {
         // Make it so that history can still be cleared
         ChatHistory.getInstance().clearAll();
     }

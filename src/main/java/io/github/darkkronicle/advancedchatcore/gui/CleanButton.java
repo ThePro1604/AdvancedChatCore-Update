@@ -7,6 +7,8 @@
  */
 package io.github.darkkronicle.advancedchatcore.gui;
 
+import net.minecraft.network.chat.Component;
+
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
@@ -16,8 +18,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /** A simple button */
 @EqualsAndHashCode(callSuper = false)
@@ -27,7 +29,7 @@ public class CleanButton extends ButtonBase {
 
     protected Color baseColor;
 
-    private MinecraftClient client = MinecraftClient.getInstance();
+    private Minecraft client = Minecraft.getInstance();
 
     /**
      * Constructs a new simple clean button
@@ -37,7 +39,7 @@ public class CleanButton extends ButtonBase {
      * @param width Width
      * @param height Height
      * @param baseColor Color that it should render when not hovered
-     * @param text Text to render
+     * @param Component text to render
      */
     public CleanButton(int x, int y, int width, int height, Color baseColor, String text) {
         super(x, y, width, height, text);
@@ -48,7 +50,7 @@ public class CleanButton extends ButtonBase {
 
     @Override
     public void render(GuiContext context, int mouseX, int mouseY, boolean selected) {
-        DrawContext drawContext = (DrawContext) (Object) context.getGuiGraphics();
+        GuiGraphicsExtractor drawContext = (GuiGraphicsExtractor) (Object) context.getGuiGraphics();
         int relMX = mouseX - x;
         int relMY = mouseY - y;
         hovered = relMX >= 0 && relMX <= width && relMY >= 0 && relMY <= height;

@@ -23,8 +23,8 @@ public class WidgetLabelHoverable extends WidgetLabel {
     }
 
     public WidgetLabelHoverable(
-            int x, int y, int width, int height, int textColor, String... text) {
-        super(x, y, width, height, textColor, text);
+            int x, int y, int width, int height, int textColor, String... Component) {
+        super(x, y, width, height, textColor, Component);
     }
 
     public void setHoverLines(String... hoverLines) {

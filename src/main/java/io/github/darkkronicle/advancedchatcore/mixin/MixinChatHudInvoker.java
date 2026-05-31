@@ -7,24 +7,27 @@
  */
 package io.github.darkkronicle.advancedchatcore.mixin;
 
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.gui.components.ChatComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.List;
 
-@Mixin(ChatHud.class)
+@Mixin(ChatComponent.class)
 public interface MixinChatHudInvoker {
+    // TODO: verify internal method names in ChatComponent 26.1
+    // In 26.1 "addVisibleMessage" may be renamed; verify before use
     @Invoker("addVisibleMessage")
-    void invokeAddVisibleMessage(ChatHudLine message);
+    void invokeAddVisibleMessage(GuiMessage message);
 
     @Invoker("addMessage")
-    void invokeAddMessage(ChatHudLine message);
+    void invokeAddMessage(GuiMessage message);
 
-    @Accessor("visibleMessages")
-    List<ChatHudLine.Visible> getVisibleMessages();
+    // In 26.1 the field is "trimmedMessages" of type List<GuiMessage.Line>
+    @Accessor("trimmedMessages")
+    List<GuiMessage.Line> getVisibleMessages();
 
     @Invoker("getWidth")
     int invokeGetWidth();

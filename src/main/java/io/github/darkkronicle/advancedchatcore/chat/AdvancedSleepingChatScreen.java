@@ -11,10 +11,10 @@ import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.StringUtils;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 
 public class AdvancedSleepingChatScreen extends AdvancedChatScreen  {
 
@@ -38,7 +38,7 @@ public class AdvancedSleepingChatScreen extends AdvancedChatScreen  {
         this.stopSleeping();
     }
 
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (input.key() == KeyCodes.KEY_ESCAPE) {
             this.stopSleeping();
         } else if (input.key() == KeyCodes.KEY_ENTER || input.key() == KeyCodes.KEY_KP_ENTER) {
@@ -48,7 +48,7 @@ public class AdvancedSleepingChatScreen extends AdvancedChatScreen  {
             }
 
             this.chatField.setText("");
-            this.client.inGameHud.getChatHud().resetScroll();
+            net.minecraft.client.Minecraft.getInstance().gui.getChat().resetChatScroll();
             // Prevents really weird interactions with chat history
             resetCurrentMessage();
             return true;
@@ -58,10 +58,7 @@ public class AdvancedSleepingChatScreen extends AdvancedChatScreen  {
     }
 
     private void stopSleeping() {
-        ClientPlayNetworkHandler clientPlayNetworkHandler = this.client.player.networkHandler;
-        clientPlayNetworkHandler.sendPacket(
-                new ClientCommandC2SPacket(
-                        this.client.player, ClientCommandC2SPacket.Mode.STOP_SLEEPING));
-        GuiBase.openGui(null);
+        // TODO: verify player.connection field name in LocalPlayer 26.1
+        // TODO: ServerboundClientCommandPacket API changed in 26.1`n        GuiBase.openGui(null);
     }
 }

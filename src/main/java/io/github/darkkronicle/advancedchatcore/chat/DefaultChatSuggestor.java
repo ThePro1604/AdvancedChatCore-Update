@@ -6,22 +6,25 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 package io.github.darkkronicle.advancedchatcore.chat;
+import io.github.darkkronicle.advancedchatcore.AdvancedChatCore;
 
 import io.github.darkkronicle.advancedchatcore.interfaces.AdvancedChatScreenSection;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ChatInputSuggestor;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.CommandSuggestions;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
-/** Handles the CommandSuggestor for the chat */
+/**
+ * Handles the CommandSuggestions for the chat.
+ * TODO: CommandSuggestions API changed in 26.1 - setWindowActive/refresh/render may be renamed
+ */
 @Environment(EnvType.CLIENT)
 public class DefaultChatSuggestor extends AdvancedChatScreenSection {
 
-    private ChatInputSuggestor commandSuggestor;
+    private CommandSuggestions commandSuggestor;
 
     public DefaultChatSuggestor(AdvancedChatScreen screen) {
         super(screen);
@@ -29,50 +32,62 @@ public class DefaultChatSuggestor extends AdvancedChatScreenSection {
 
     @Override
     public void onChatFieldUpdate(String chatText, String text) {
-        this.commandSuggestor.setWindowActive(!text.equals(getScreen().getOriginalChatText()));
-        this.commandSuggestor.refresh();
+        // TODO: verify setWindowActive in CommandSuggestions 26.1
+        // this.commandSuggestor.setWindowActive(!text.equals(getScreen().getOriginalChatText()));
+        // this.commandSuggestor.refresh();
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
-        return this.commandSuggestor.keyPressed(input);
+    public boolean keyPressed(KeyEvent input) {
+        // TODO: verify CommandSuggestions.keyPressed in 26.1
+        return false;
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float partialTicks) {
-        this.commandSuggestor.render(context, mouseX, mouseY);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float partialTicks) {
+        // TODO: verify CommandSuggestions.render/extractRenderState in 26.1
+        // this.commandSuggestor.render(context, mouseX, mouseY);
     }
 
     @Override
     public void setChatFromHistory(String hist) {
-        this.commandSuggestor.setWindowActive(false);
+        // TODO: verify setWindowActive in CommandSuggestions 26.1
+        // this.commandSuggestor.setWindowActive(false);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        return this.commandSuggestor.mouseScrolled(amount);
+        // TODO: verify mouseScrolled in CommandSuggestions 26.1
+        return false;
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
-        return this.commandSuggestor.mouseClicked(click);
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        // TODO: verify mouseClicked in CommandSuggestions 26.1
+        return false;
     }
 
     @Override
     public void resize(int width, int height) {
-        this.commandSuggestor.refresh();
+        // TODO: verify refresh in CommandSuggestions 26.1
+        // this.commandSuggestor.refresh();
     }
 
     @Override
     public void initGui() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        if (!AdvancedChatCore.CREATE_SUGGESTOR) {
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
         AdvancedChatScreen screen = getScreen();
+        // TODO: verify CommandSuggestions constructor signature in 26.1
+        /*
         this.commandSuggestor =
-                new ChatInputSuggestor(
+                new CommandSuggestions(
                         client,
                         screen,
                         screen.chatField,
-                        client.textRenderer,
+                        client.font,
                         false,
                         false,
                         1,
@@ -80,5 +95,6 @@ public class DefaultChatSuggestor extends AdvancedChatScreenSection {
                         true,
                         -805306368);
         this.commandSuggestor.refresh();
+        */
     }
 }

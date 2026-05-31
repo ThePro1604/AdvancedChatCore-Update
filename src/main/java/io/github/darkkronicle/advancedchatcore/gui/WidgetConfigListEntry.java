@@ -9,9 +9,9 @@ package io.github.darkkronicle.advancedchatcore.gui;
 
 import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
 import fi.dy.masa.malilib.gui.widgets.WidgetBase;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntryBase;
 import fi.dy.masa.malilib.gui.wrappers.TextFieldWrapper;
 import fi.dy.masa.malilib.render.GuiContext;
@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 @Environment(EnvType.CLIENT)
 public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TYPE> {
@@ -63,7 +63,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
 
     @Override
     public void render(GuiContext context, int mouseX, int mouseY, boolean selected) {
-        DrawContext drawContext = (DrawContext) (Object) context.getGuiGraphics();
+        GuiGraphicsExtractor drawContext = (GuiGraphicsExtractor) (Object) context.getGuiGraphics();
 
         // Draw a lighter background for the hovered and the selected entry
         if (selected || this.isMouseOver(mouseX, mouseY)) {
@@ -91,7 +91,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
 
         renderEntry(context, mouseX, mouseY, selected);
 
-        this.drawTextFields(mouseX, mouseY, drawContext);
+        // TODO: drawTextFields API in malilib 26.1
 
         super.render(context, mouseX, mouseY, selected);
     }
@@ -127,7 +127,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
     }
 
     @Override
-    protected boolean onKeyTypedImpl(KeyInput input) {
+    protected boolean onKeyTypedImpl(KeyEvent input) {
         if (getTextFields() == null) {
             return false;
         }
@@ -140,7 +140,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
     }
 
     @Override
-    protected boolean onCharTypedImpl(CharInput input) {
+    protected boolean onCharTypedImpl(CharacterEvent input) {
         if (getTextFields() != null) {
             for (TextFieldWrapper<GuiTextFieldGeneric> field : getTextFields()) {
                 if (field != null && field.onCharTyped(input)) {
@@ -153,7 +153,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
     }
 
     @Override
-    protected boolean onMouseClickedImpl(Click click, boolean doubled) {
+    protected boolean onMouseClickedImpl(MouseButtonEvent click, boolean doubled) {
         if (super.onMouseClickedImpl(click, doubled)) {
             return true;
         }
@@ -179,12 +179,12 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
         return ret;
     }
 
-    protected void drawTextFields(int mouseX, int mouseY, DrawContext context) {
+    protected void drawTextFields(int mouseX, int mouseY, GuiGraphicsExtractor context) {
         if (getTextFields() == null) {
             return;
         }
         for (TextFieldWrapper<GuiTextFieldGeneric> field : getTextFields()) {
-            field.textField().render(context, mouseX, mouseY, 0f);
+            // TODO: textField render API in malilib 26.1;
         }
     }
 }

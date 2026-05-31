@@ -12,44 +12,33 @@ import fi.dy.masa.malilib.util.StringUtils;
 import java.util.*;
 import java.util.function.BiFunction;
 import lombok.experimental.UtilityClass;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextContent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentContents;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 
 @UtilityClass
 public class TextUtil {
 
     private final char[] SUPERSCRIPTS =
             new char[] {
-                    '\u2070', '\u00B9', '\u00B2', '\u00B3', '\u2074', '\u2075', '\u2076', '\u2077',
-                    '\u2078', '\u2079'
+                    '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷',
+                    '⁸', '⁹'
             };
 
-    /**
-     * Calculates the similarity (a number within 0 and 1) between two strings.
-     *
-     * <p>https://stackoverflow.com/questions/955110/similarity-string-comparison-in-java
-     */
     public static double similarity(String s1, String s2) {
         String longer = s1, shorter = s2;
-        if (s1.length() < s2.length()) { // longer should always have greater length
+        if (s1.length() < s2.length()) {
             longer = s2;
             shorter = s1;
         }
         int longerLength = longer.length();
         if (longerLength == 0) {
-            return 1.0; /* both strings are zero length */
+            return 1.0;
         }
-        /* // If you have Apache Commons Text, you can use it to calculate the edit distance:
-        LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
-        return (longerLength - levenshteinDistance.apply(longer, shorter)) / (double) longerLength; */
         return (longerLength - editDistance(longer, shorter)) / (double) longerLength;
     }
 
-    // Example implementation of the Levenshtein Edit Distance
-    // See http://rosettacode.org/wiki/Levenshtein_distance#Java
-    /** https://stackoverflow.com/questions/955110/similarity-string-comparison-in-java */
     public int editDistance(String s1, String s2) {
         s1 = s1.toLowerCase();
         s2 = s2.toLowerCase();
@@ -74,7 +63,6 @@ public class TextUtil {
         return costs[s2.length()];
     }
 
-    /** Get's a superscript from a number */
     public String toSuperscript(int num) {
         StringBuilder sb = new StringBuilder();
         do {
@@ -83,12 +71,10 @@ public class TextUtil {
         return sb.reverse().toString();
     }
 
-    /** Get's the maximum width of a list of translations */
     public int getMaxLengthTranslation(Collection<String> translations) {
         return getMaxLengthTranslation(translations.toArray(new String[0]));
     }
 
-    /** Get's the maximum width of a list of translations */
     public int getMaxLengthTranslation(String... translations) {
         List<String> translated = new ArrayList<>();
         for (String translation : translations) {
@@ -97,16 +83,14 @@ public class TextUtil {
         return getMaxLengthString(translated);
     }
 
-    /** Get's the maximum width of a list of strings */
     public int getMaxLengthString(Collection<String> strings) {
         return getMaxLengthString(strings.toArray(new String[0]));
     }
 
-    /** Get's the maximum width of a list of strings */
     public int getMaxLengthString(String... strings) {
         int max = 0;
-        for (String text : strings) {
-            int width = StringUtils.getStringWidth(text);
+        for (String str : strings) {
+            int width = StringUtils.getStringWidth(str);
             if (width > max) {
                 max = width;
             }
@@ -116,13 +100,11 @@ public class TextUtil {
 
     private TreeMap<StringMatch, StringInsert> filterMatches(
             Map<StringMatch, StringInsert> matches) {
-        // Filters through matches that don't make sense
         TreeMap<StringMatch, StringInsert> map = new TreeMap<>(matches);
         Iterator<StringMatch> search = new TreeMap<>(map).keySet().iterator();
         int lastEnd = 0;
         while (search.hasNext()) {
             StringMatch m = search.next();
-            // Remove overlaps
             if (m.start < lastEnd) {
                 map.remove(m);
             } else {
@@ -132,45 +114,34 @@ public class TextUtil {
         return map;
     }
 
-    /**
-     * Complex method used to split up the split text in this class and replace matches to a string.
-     *
-     * @param matches Map containing a match and a FluidText provider
-     */
-    public Text replaceStrings(Text input, Map<StringMatch, StringInsert> matches) {
-        // If there's no matches nothing should get replaced.
+    public Component replaceStrings(Component input, Map<StringMatch, StringInsert> matches) {
         if (matches.size() == 0) {
             return input;
         }
-        // Sort the matches and then get a nice easy iterator for navigation
         Iterator<Map.Entry<StringMatch, StringInsert>> sortedMatches =
                 filterMatches(matches).entrySet().iterator();
         if (!sortedMatches.hasNext()) {
             return input;
         }
-        // List of new RawText to form a new FluidText.
         TextBuilder newSiblings = new TextBuilder();
-        // What match this is currently on.
         Map.Entry<StringMatch, StringInsert> match = sortedMatches.next();
 
-        // Total number of chars went through. Used to find where the match end and beginning is.
         int totalchar = 0;
         boolean inMatch = false;
-        for (RawText text : new TextBuilder().append(input).getTexts()) {
+        for (RawText rawText : new TextBuilder().append(input).getTexts()) {
 
-            if (text.getString() == null || text.getString().length() <= 0) {
+            if (rawText.getString() == null || rawText.getString().length() <= 0) {
                 continue;
             }
             if (match == null) {
-                // No more replacing...
-                newSiblings.append(text);
+                newSiblings.append(rawText);
                 continue;
             }
-            int length = text.getString().length();
+            int length = rawText.getString().length();
             int last = 0;
             while (true) {
                 if (length + totalchar <= match.getKey().start) {
-                    newSiblings.append(text.getString().substring(last), text.getStyle());
+                    newSiblings.append(rawText.getString().substring(last), rawText.getStyle());
                     break;
                 }
                 int start = match.getKey().start - totalchar;
@@ -178,7 +149,7 @@ public class TextUtil {
                 if (inMatch) {
                     if (end <= length) {
                         inMatch = false;
-                        newSiblings.append(text.getString().substring(end), text.getStyle());
+                        newSiblings.append(rawText.getString().substring(end), rawText.getStyle());
                         last = end;
                         if (!sortedMatches.hasNext()) {
                             match = null;
@@ -189,13 +160,11 @@ public class TextUtil {
                         break;
                     }
                 } else if (start < length) {
-                    // End will go onto another string
                     if (start > 0) {
-                        // Add previous string section
-                        newSiblings.append(text.getString().substring(last, start), text.getStyle());
+                        newSiblings.append(rawText.getString().substring(last, start), rawText.getStyle());
                     }
                     if (end >= length) {
-                        newSiblings.append(match.getValue().getText(text, match.getKey()));
+                        newSiblings.append(match.getValue().getText(rawText, match.getKey()));
                         if (end == length) {
                             if (!sortedMatches.hasNext()) {
                                 match = null;
@@ -207,7 +176,7 @@ public class TextUtil {
                         }
                         break;
                     }
-                    newSiblings.append(match.getValue().getText(text, match.getKey()));
+                    newSiblings.append(match.getValue().getText(rawText, match.getKey()));
                     if (!sortedMatches.hasNext()) {
                         match = null;
                     } else {
@@ -215,7 +184,7 @@ public class TextUtil {
                     }
                     last = end;
                     if (match == null || match.getKey().start - totalchar > length) {
-                        newSiblings.append(text.getString().substring(end), text.getStyle());
+                        newSiblings.append(rawText.getString().substring(end), rawText.getStyle());
                         break;
                     }
                 } else {
@@ -231,54 +200,47 @@ public class TextUtil {
         return newSiblings.build();
     }
 
-    /**
-     * Splits off the text that is held by a {@link StringMatch}
-     *
-     * @param match Match to grab text from
-     * @return MutableText of text
-     */
-    public static MutableText truncate(Text input, StringMatch match) {
-        ArrayList<Text> newSiblings = new ArrayList<>();
+    public static MutableComponent truncate(Component input, StringMatch match) {
+        ArrayList<Component> newSiblings = new ArrayList<>();
         boolean start = false;
-        // Total number of chars went through. Used to find where the match end and beginning is.
         int totalchar = 0;
-        List<Text> siblings = input.getSiblings();
-        siblings.add(0, MutableText.of(input.getContent()).fillStyle(input.getStyle()));
-        for (Text text : siblings) {
-            if (text.getContent() == null || text.getString().length() <= 0) {
+        List<Component> siblings = input.getSiblings();
+        // TODO: verify MutableComponent.create() API in 26.1
+        siblings.add(0, MutableComponent.create(input.getContents()).setStyle(input.getStyle()));
+        for (Component sib : siblings) {
+            if (sib.getContents() == null || sib.getString().length() <= 0) {
                 continue;
             }
 
-            int length = text.getString().length();
+            int length = sib.getString().length();
 
-            // Checks to see if current text contains the match.start.
             if (totalchar + length > match.start) {
                 if (totalchar + length >= match.end) {
                     if (!start) {
                         newSiblings.add(
-                                Text.literal(
-                                        text.getString()
+                                Component.literal(
+                                        sib.getString()
                                                 .substring(
                                                         match.start - totalchar,
-                                                        match.end - totalchar)).fillStyle(text.getStyle()));
+                                                        match.end - totalchar)).withStyle(sib.getStyle()));
                     } else {
                         newSiblings.add(
-                                Text.literal(
-                                        text.getString().substring(0, match.end - totalchar)).fillStyle(text.getStyle()));
+                                Component.literal(
+                                        sib.getString().substring(0, match.end - totalchar)).withStyle(sib.getStyle()));
                     }
-                    MutableText newtext = Text.empty();
-                    for (Text sibling : newSiblings) {
+                    MutableComponent newtext = Component.empty();
+                    for (Component sibling : newSiblings) {
                         newtext.append(sibling);
                     }
                     return newtext;
                 } else {
                     if (!start) {
                         newSiblings.add(
-                                Text.literal(
-                                        text.getString().substring(match.start - totalchar)).fillStyle(text.getStyle()));
+                                Component.literal(
+                                        sib.getString().substring(match.start - totalchar)).withStyle(sib.getStyle()));
                         start = true;
                     } else {
-                        newSiblings.add(text);
+                        newSiblings.add(sib);
                     }
                 }
             }
@@ -286,25 +248,19 @@ public class TextUtil {
             totalchar = totalchar + length;
         }
 
-        // At the end we take the siblings created in this method and return them.
-        MutableText newtext = Text.empty();
-        for (Text sibling : newSiblings) {
+        MutableComponent newtext = Component.empty();
+        for (Component sibling : newSiblings) {
             newtext.append(sibling);
         }
         return newtext;
     }
 
-    /**
-     * See's if style changes for specified fluid text
-     * @param text Text to test
-     * @return If style changes
-     */
-    public static boolean styleChanges(Text text) {
+    public static boolean styleChanges(Component component) {
         Style style = null;
-        if (text.getSiblings().size() == 1) {
+        if (component.getSiblings().size() == 1) {
             return false;
         }
-        for (Text raw : text.getSiblings()) {
+        for (Component raw : component.getSiblings()) {
             if (style == null) {
                 style = raw.getStyle();
             } else if (!style.equals(raw.getStyle())) {
@@ -314,18 +270,12 @@ public class TextUtil {
         return false;
     }
 
-    /**
-     * See's if style changes for specified fluid text
-     * @param text Text to test
-     * @param predicate Predicate to see if style has changed enough. Previous, current, different
-     * @return If style changes
-     */
-    public static boolean styleChanges(Text text, BiFunction<Style, Style, Boolean> predicate) {
+    public static boolean styleChanges(Component component, BiFunction<Style, Style, Boolean> predicate) {
         Style previous = null;
-        if (text.getSiblings().size() == 1) {
-            return !predicate.apply(text.getSiblings().get(0).getStyle(), text.getSiblings().get(0).getStyle());
+        if (component.getSiblings().size() == 1) {
+            return !predicate.apply(component.getSiblings().get(0).getStyle(), component.getSiblings().get(0).getStyle());
         }
-        for (Text raw : text.getSiblings()) {
+        for (Component raw : component.getSiblings()) {
             if (previous == null) {
                 previous = raw.getStyle();
             } else if (!previous.equals(raw.getStyle())) {
@@ -338,7 +288,7 @@ public class TextUtil {
         return false;
     }
 
-    public static String getContent(TextContent content) {
+    public static String getContent(ComponentContents content) {
         StringBuilder builder = new StringBuilder();
         content.visit((s) -> {
             builder.append(s);

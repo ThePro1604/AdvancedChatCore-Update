@@ -9,15 +9,15 @@ package io.github.darkkronicle.advancedchatcore.gui;
 
 import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
 import fi.dy.masa.malilib.gui.interfaces.ISelectionListener;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
 import fi.dy.masa.malilib.gui.widgets.WidgetListBase;
 import fi.dy.masa.malilib.gui.wrappers.TextFieldWrapper;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 
 public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntry<TYPE>>
         extends WidgetListBase<TYPE, WIDGET> {
@@ -36,11 +36,11 @@ public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntr
         this.setParent(parent);
     }
 
-    public void resize(MinecraftClient mc, int width, int height) {
+    public void resize(Minecraft mc, int width, int height) {
         this.width = width;
         this.height = height;
         this.clearElements();
-        this.clearAndInit();
+        // TODO: clearAndInit malilib 26.1;
     }
 
     @Override
@@ -49,8 +49,8 @@ public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntr
         super.reCreateListEntryWidgets();
     }
 
-    public void addTextField(TextFieldWrapper<GuiTextFieldGeneric> text) {
-        textFields.add(text);
+    public void addTextField(TextFieldWrapper<GuiTextFieldGeneric> Component) {
+        textFields.add(Component);
     }
 
     protected void clearTextFieldFocus() {
@@ -65,13 +65,13 @@ public abstract class WidgetConfigList<TYPE, WIDGET extends WidgetConfigListEntr
     }
 
     @Override
-    public boolean onMouseClicked(Click click, boolean doubled) {
+    public boolean onMouseClicked(MouseButtonEvent click, boolean doubled) {
         clearTextFieldFocus();
         return super.onMouseClicked(click, doubled);
     }
 
     @Override
-    public boolean onKeyTyped(KeyInput input) {
+    public boolean onKeyTyped(KeyEvent input) {
         for (WidgetConfigListEntry<TYPE> widget : this.listWidgets) {
             if (widget.onKeyTyped(input)) {
                 return true;

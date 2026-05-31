@@ -15,82 +15,72 @@ import com.mojang.brigadier.tree.CommandNode;
 import fi.dy.masa.malilib.util.KeyCodes;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
 import io.github.darkkronicle.advancedchatcore.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.render.*;
-import net.minecraft.command.CommandSource;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class AdvancedTextField extends TextFieldWidget {
+public class AdvancedTextField extends EditBox {
 
     private final static int MAX_HISTORY = 50;
 
-    /**
-     * Stores the last saved snapshot of the box. This ensures that not every character update is
-     * put in, but instead groups.
-     */
     private String lastSaved = "";
 
-    /** Snapshots of chat box */
     private final List<String> history = new ArrayList<>();
 
     private int focusedTicks = 0;
-    private List<Text> renderLines = new ArrayList<>();
-    private TextRenderer textRenderer;
+    private List<Component> renderLines = new ArrayList<>();
+    private Font font;
     private String suggestion = null;
     private int maxLength = 32;
     private int selectionEnd;
     private int selectionStart;
-    // TODO Split?
-    private BiFunction<String, Integer, OrderedText> renderTextProvider = (string, firstCharacterIndex) -> {
+    private BiFunction<String, Integer, FormattedCharSequence> renderTextProvider = (string, firstCharacterIndex) -> {
         // Check if the string starts with "/" to enable command highlighting
         if (string.startsWith("/")) {
             return highlightCommand(string);
         }
 
         // Convert & color codes to § section symbols only when followed by valid formatting character
-        // Valid characters: 0-9, a-f, k-o, r (color codes and formatting codes)
         String converted = string.replaceAll("&([0-9a-fk-or])", "§$1");
-        Text text = Text.literal(converted);
-        Text formatted = StyleFormatter.formatText(text);
-        return formatted.asOrderedText();
+        Component text = Component.literal(converted);
+        Component formatted = StyleFormatter.formatText(text);
+        return formatted.getVisualOrderText();
     };
 
     private int historyIndex = -1;
 
-    public AdvancedTextField(TextRenderer textRenderer, int x, int y, int width, int height, Text text) {
-        this(textRenderer, x, y, width, height, null, text);
+    public AdvancedTextField(Font font, int x, int y, int width, int height, Component text) {
+        this(font, x, y, width, height, null, text);
     }
 
     public AdvancedTextField(
-            TextRenderer textRenderer,
+            Font font,
             int x,
             int y,
             int width,
             int height,
-            @Nullable TextFieldWidget copyFrom,
-            Text text) {
-        super(textRenderer, x, y, width, height, copyFrom, text);
+            @Nullable EditBox copyFrom,
+            Component text) {
+        super(font, x, y, width, height, copyFrom, text);
         history.add("");
-        this.textRenderer = textRenderer;
+        this.font = font;
         updateRender();
     }
 
@@ -100,67 +90,54 @@ public class AdvancedTextField extends TextFieldWidget {
      * - Light reddish for valid commands
      * - Blue for arguments
      */
-    private OrderedText highlightCommand(String input) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    private FormattedCharSequence highlightCommand(String input) {
+        Minecraft client = Minecraft.getInstance();
 
-        // If we don't have a network handler or command dispatcher, fall back to basic formatting
-        if (client.getNetworkHandler() == null || client.getNetworkHandler().getCommandDispatcher() == null) {
-            return Text.literal(input).asOrderedText();
+        if (client.getConnection() == null || client.getConnection().getCommands() == null) {
+            return Component.literal(input).getVisualOrderText();
         }
 
-        // Create text builder for the result
-        Text result;
+        Component result;
 
         try {
-            // Remove the leading "/" for parsing
             String command = input.substring(1);
 
-            // Parse the command using Brigadier
             StringReader reader = new StringReader(command);
-            ParseResults<ClientCommandSource> parseResults = client.getNetworkHandler()
-                    .getCommandDispatcher()
-                    .parse(reader, client.getNetworkHandler().getCommandSource());
+            ParseResults<ClientSuggestionProvider> parseResults = client.getConnection()
+                    .getCommands()
+                    .parse(reader, client.getConnection().getSuggestionsProvider());
 
-            // Check if there are any parsed nodes (valid command path)
             boolean hasValidCommand = !parseResults.getContext().getNodes().isEmpty();
 
-            // Get colors from config
             int invalidColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_INVALID.config.getIntegerValue();
             int validColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_VALID.config.getIntegerValue();
             int argumentColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_ARGUMENTS.config.getIntegerValue();
 
             if (!hasValidCommand) {
-                // Invalid command - color everything with the configured invalid color
-                result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(invalidColor)));
+                result = Component.literal(input).withStyle(style -> style.withColor(TextColor.fromRgb(invalidColor)));
             } else {
-                // Valid command - highlight parts differently
-                MutableText mutableText = Text.literal("/").styled(style -> style.withColor(TextColor.fromRgb(validColor)));
+                MutableComponent mutableText = Component.literal("/").withStyle(style -> style.withColor(TextColor.fromRgb(validColor)));
 
-                // Get the command name (first word)
                 int firstSpaceIndex = command.indexOf(' ');
                 String commandName = firstSpaceIndex > 0 ? command.substring(0, firstSpaceIndex) : command;
 
-                // Color the command name with the configured valid color
-                mutableText.append(Text.literal(commandName).styled(style -> style.withColor(TextColor.fromRgb(validColor))));
+                mutableText.append(Component.literal(commandName).withStyle(style -> style.withColor(TextColor.fromRgb(validColor))));
 
-                // Color the rest (arguments) with the configured argument color
                 if (firstSpaceIndex > 0 && firstSpaceIndex < command.length()) {
                     String arguments = command.substring(firstSpaceIndex);
-                    mutableText.append(Text.literal(arguments).styled(style -> style.withColor(TextColor.fromRgb(argumentColor))));
+                    mutableText.append(Component.literal(arguments).withStyle(style -> style.withColor(TextColor.fromRgb(argumentColor))));
                 }
 
                 result = mutableText;
             }
         } catch (Exception e) {
-            // If parsing fails, color as error using the configured invalid color
             int invalidColor = ConfigStorage.ChatScreen.COMMAND_SYNTAX_INVALID.config.getIntegerValue();
-            result = Text.literal(input).styled(style -> style.withColor(TextColor.fromRgb(invalidColor)));
+            result = Component.literal(input).withStyle(style -> style.withColor(TextColor.fromRgb(invalidColor)));
         }
 
-        return result.asOrderedText();
+        return result.getVisualOrderText();
     }
 
-    //@Override
     public void tick() {
         focusedTicks++;
     }
@@ -171,32 +148,25 @@ public class AdvancedTextField extends TextFieldWidget {
         super.setMaxLength(maxLength);
     }
 
-    public static boolean isUndo(KeyInput input) {
-        // Undo (Ctrl + Z)
-        return input.key() == KeyCodes.KEY_Z && input.hasCtrl() && !input.hasAlt();
+    public static boolean isUndo(KeyEvent input) {
+        return input.key() == KeyCodes.KEY_Z && (input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0 && (input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_ALT) == 0;
     }
 
-    /** Triggers undo for the text box */
     public void undo() {
-        // Save the current snapshot if it's been edited
         if (!this.lastSaved.equals(this.getText()) && historyIndex < 0) {
             addToHistory(getText());
         }
-        // History index < 0 means not in the middle of undoing
         if (historyIndex < 0) {
             historyIndex = history.size() - 1;
         }
-        // Check that we're not at index 0
         if (historyIndex != 0) {
             historyIndex--;
         }
-        // Set the text but don't update
         setText(history.get(historyIndex), false);
     }
 
     public void redo() {
         if (historyIndex < 0 || historyIndex >= history.size() - 1) {
-            // No stuff to redo...
             return;
         }
         historyIndex++;
@@ -204,15 +174,15 @@ public class AdvancedTextField extends TextFieldWidget {
     }
 
     @Override
-    public void write(String text) {
-        super.write(text);
+    public void insertText(String text) {
+        super.insertText(text);
         updateHistory();
         updateRender();
     }
 
     @Override
-    public void eraseCharacters(int characterOffset) {
-        super.eraseCharacters(characterOffset);
+    public void deleteChars(int num) {
+        super.deleteChars(num);
         updateHistory();
         updateRender();
     }
@@ -223,93 +193,89 @@ public class AdvancedTextField extends TextFieldWidget {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
-
-        int renderY = getY() - (renderLines.size() - 1) * (textRenderer.fontHeight + 2);
-        if (click.button() < renderY - 2 || click.y() > getY() + height + 2 || click.x() < getX() - 2 || click.x() > getX() + width + 4) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int renderY = getY() - (renderLines.size() - 1) * (font.lineHeight + 2);
+        if (mouseY < renderY - 2 || mouseY > getY() + height + 2 || mouseX < getX() - 2 || mouseX > getX() + width + 4) {
             return false;
         }
-        return super.mouseClicked(click, doubled);
+        return super.mouseClicked(event, doubled);
     }
 
-
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         int color = 0xFFE0E0E0;
-        int cursor = getCursor();
+        int cursor = getCursorPosition();
         int cursorRow = renderLines.size() - 1;
         boolean renderCursor = this.isFocused() && focusedTicks / 6 % 2 == 0;
-        int renderY = getY() - (renderLines.size() - 1) * (textRenderer.fontHeight + 2);
+        int renderY = getY() - (renderLines.size() - 1) * (font.lineHeight + 2);
         int endX = 0;
         int charCount = 0;
         int cursorX = -1;
-        boolean selection = selectionStart != selectionEnd;
+        // selectionStart = highlight anchor (shadow of EditBox highlightPos)
+        // cursor         = current cursor position (from getCursorPosition())
+        // Only draw a selection rectangle when they differ (i.e. user has selected text)
+        int selStart = Math.min(selectionStart, cursor);
+        int selEnd   = Math.max(selectionStart, cursor);
+        boolean selection = selStart != selEnd;
         boolean started = false;
         boolean ended = false;
-        int selStart;
-        int selEnd;
-        if (this.selectionStart < this.selectionEnd) {
-            selStart = this.selectionStart;
-            selEnd = this.selectionEnd;
-        } else {
-            selStart = this.selectionEnd;
-            selEnd = this.selectionStart;
-        }
         int x = getX();
-        int y = getY()    ;
+        int y = getY();
         context.fill(getX() - 2, renderY - 2, getX() + width + 4, getY() + height + 4, ConfigStorage.ChatScreen.COLOR.config.getIntegerValue());
         for (int line = 0; line < renderLines.size(); line++) {
-            Text text = renderLines.get(line);
+            Component text = renderLines.get(line);
             if (cursor >= charCount && cursor < text.getString().length() + charCount) {
-                cursorX = textRenderer.getWidth(text.getString().substring(0, cursor - charCount));
+                cursorX = font.width(text.getString().substring(0, cursor - charCount));
                 cursorRow = line;
             }
-            endX = x + textRenderer.getWidth(text);
-            context.drawTextWithShadow(textRenderer, text, x, renderY, color);
+            endX = x + font.width(text);
+            context.text(font, text, x, renderY, color);
             if (selection) {
                 if (!started && selStart >= charCount && selStart <= text.getString().length() + charCount) {
                     started = true;
-                    int startX = textRenderer.getWidth(TextUtil.truncate(text, new StringMatch("", 0, selStart - charCount)));
+                    int startX = font.width(TextUtil.truncate(text, new StringMatch("", 0, selStart - charCount)));
                     if (selEnd > charCount && selEnd <= text.getString().length() + charCount) {
                         ended = true;
-                        int sEndX = textRenderer.getWidth(TextUtil.truncate(text, new StringMatch("", 0, selEnd - charCount)));
-                        drawSelectionHighlight(context, x + startX, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        int sEndX = font.width(TextUtil.truncate(text, new StringMatch("", 0, selEnd - charCount)));
+                        drawSelectionHighlight(context, x + startX, renderY - 1, x + sEndX, renderY + font.lineHeight);
                     } else {
-                        int sEndX = textRenderer.getWidth(text);
-                        drawSelectionHighlight(context, x + startX, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        int sEndX = font.width(text);
+                        drawSelectionHighlight(context, x + startX, renderY - 1, x + sEndX, renderY + font.lineHeight);
                     }
                 } else if (started && !ended) {
                     if (selEnd >= charCount && selEnd <= text.getString().length() + charCount) {
                         ended = true;
-                        int sEndX = textRenderer.getWidth(TextUtil.truncate(text, new StringMatch("", 0, selEnd - charCount)));
-                        drawSelectionHighlight(context, x, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        int sEndX = font.width(TextUtil.truncate(text, new StringMatch("", 0, selEnd - charCount)));
+                        drawSelectionHighlight(context, x, renderY - 1, x + sEndX, renderY + font.lineHeight);
                     } else {
-                        int sEndX = textRenderer.getWidth(text);
-                        drawSelectionHighlight(context, x, renderY - 1, x + sEndX, renderY + textRenderer.fontHeight);
+                        int sEndX = font.width(text);
+                        drawSelectionHighlight(context, x, renderY - 1, x + sEndX, renderY + font.lineHeight);
                     }
                 }
             }
-            renderY += textRenderer.fontHeight + 2;
+            renderY += font.lineHeight + 2;
             charCount += text.getString().length();
         }
         if (cursorX < 0) {
             cursorX = endX;
         }
-        boolean cursorAtEnd = getCursor() == getText().length();
+        boolean cursorAtEnd = getCursorPosition() == getValue().length();
         if (!cursorAtEnd && this.suggestion != null) {
-            context.drawTextWithShadow(textRenderer, this.suggestion, endX - 1, y, -8355712);
+            context.text(font, this.suggestion, endX - 1, y, -8355712);
         }
         if (renderCursor) {
-            int cursorY = y - (renderLines.size() - 1 - cursorRow) * (textRenderer.fontHeight + 2);
+            int cursorY = y - (renderLines.size() - 1 - cursorRow) * (font.lineHeight + 2);
             if (cursorAtEnd) {
-                context.fill(cursorX, cursorY - 1, cursorX + 1, cursorY + 1 + this.textRenderer.fontHeight, -3092272);
+                context.fill(cursorX, cursorY - 1, cursorX + 1, cursorY + 1 + this.font.lineHeight, -3092272);
             } else {
-                context.drawTextWithShadow(textRenderer, "_", x + cursorX, cursorY, color);
+                context.text(font, "_", x + cursorX, cursorY, color);
             }
         }
     }
 
-    private void drawSelectionHighlight(DrawContext context, int x1, int y1, int x2, int y2) {
+    private void drawSelectionHighlight(GuiGraphicsExtractor context, int x1, int y1, int x2, int y2) {
         int x = getX();
         int y = getY();
         int i;
@@ -329,37 +295,24 @@ public class AdvancedTextField extends TextFieldWidget {
         if (x1 > x + this.width) {
             x1 = x + this.width;
         }
-
-        context.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, 0xFF0000FF);
+        // TODO: verify fill with Component highlight in GuiGraphicsExtractor 26.1 (was RenderPipelines.GUI_TEXT_HIGHLIGHT)
+        context.fillGradient(x1, y1, x2, y2, 0xFF0000FF, 0xFF0000FF);
     }
 
     @Override
-    public void setSelectionStart(int cursor) {
-        this.selectionStart = MathHelper.clamp(cursor, 0, getText().length());
-        super.setSelectionStart(cursor);
+    public void setHighlightPos(int cursor) {
+        this.selectionStart = Mth.clamp(cursor, 0, getValue().length());
+        super.setHighlightPos(cursor);
     }
 
-    @Override
     public void setSelectionEnd(int index) {
-        int i = getText().length();
-        this.selectionEnd = MathHelper.clamp(index, 0, i);
-        super.setSelectionEnd(index);
+        int i = getValue().length();
+        this.selectionEnd = Mth.clamp(index, 0, i);
     }
 
-    @Override
-    public SelectionType getType() {
-        return super.getType();
-    }
 
-    /**
-     * Sets the text for the text field
-     *
-     * @param text Text to set
-     * @param update Updates the history
-     */
     public void setText(String text, boolean update) {
-        // Wrapper class for setText
-        super.setText(text);
+        super.setValue(text);
         if (update) {
             updateHistory();
         }
@@ -367,28 +320,34 @@ public class AdvancedTextField extends TextFieldWidget {
     }
 
     @Override
+    public void setValue(String text) {
+        setText(text, true);
+    }
+
+    public String getText() {
+        return getValue();
+    }
+
     public void setText(String text) {
         setText(text, true);
     }
 
     private void updateRender() {
-        OrderedText formatted = renderTextProvider.apply(getText(), 0);
-        renderLines = StyleFormatter.wrapText(textRenderer, getWidth(), new TextBuilder().append(formatted).build());
+        FormattedCharSequence formatted = renderTextProvider.apply(getValue(), 0);
+        renderLines = StyleFormatter.wrapText(font, getWidth(), new TextBuilder().append(formatted).build());
     }
 
     private void updateHistory() {
         if (historyIndex >= 0) {
-            // Remove all history after what has gone back
             pruneHistory(historyIndex + 1);
             historyIndex = -1;
         }
-        // Check to see if it should log
-        int dif = getText().length() - lastSaved.length();
-        double sim = TextUtil.similarity(getText(), lastSaved);
+        int dif = getValue().length() - lastSaved.length();
+        double sim = TextUtil.similarity(getValue(), lastSaved);
         if (sim >= .3 && (dif < 5 && dif * -1 < 5) || (sim >= .9)) {
             return;
         }
-        addToHistory(getText());
+        addToHistory(getValue());
     }
 
     private void addToHistory(String text) {
@@ -399,11 +358,6 @@ public class AdvancedTextField extends TextFieldWidget {
         }
     }
 
-    /**
-     * Remove's all history past a certain index
-     *
-     * @param index Index to prune from. Non-inclusive.
-     */
     private void pruneHistory(int index) {
         if (index == 0) {
             history.clear();
@@ -414,34 +368,27 @@ public class AdvancedTextField extends TextFieldWidget {
         }
     }
 
-    @Override
-    public boolean keyPressed(KeyInput input) {
+public boolean keyPressed(KeyEvent input) {
         if (!this.isActive()) {
             return false;
         }
         if (!isUndo(input)) {
             return super.keyPressed(input);
         }
-        if (input.hasShift()) {
+        if ((input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0) {
             redo();
         } else {
             undo();
         }
         return true;
     }
-
-    @Override
-    public void appendClickableNarrations(NarrationMessageBuilder builder) {
-        // Crashes here because Text is null
-    }
-
-    @Override
-    public void eraseWords(int wordOffset) {
-        if (!this.getText().isEmpty()) {
+@Override
+    public void deleteWords(int wordOffset) {
+        if (!this.getValue().isEmpty()) {
             if (this.selectionEnd != this.selectionStart) {
-                this.setText("");
+                this.setValue("");
             } else {
-                this.eraseCharacters(this.getWordSkipPosition(wordOffset) - this.selectionStart);
+                this.deleteChars(this.getWordPosition(wordOffset) - this.selectionStart);
             }
         }
     }

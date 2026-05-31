@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.Optional;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MessageSignature;
+import net.minecraft.network.chat.MutableComponent;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,13 +49,11 @@ public class MessageDispatcher {
     }
 
     private MessageDispatcher() {
-        // We don't really want this to be reconstructed or changed because it will lead to problems
-        // of not having everything registered
-        registerPreFilter(text -> Optional.of(StyleFormatter.formatText(text)), -1);
+        registerPreFilter(msg -> Optional.of(StyleFormatter.formatText(msg)), -1);
 
         registerPreFilter(
-                text -> {
-                    String string = text.getString();
+                msg -> {
+                    String string = msg.getString();
                     if (string.isEmpty()) {
                         return Optional.empty();
                     }
@@ -77,22 +75,20 @@ public class MessageDispatcher {
                                             match1.match, "(http(s)?:\\/\\/.)", FindType.REGEX)) {
                                         url = "https://" + url;
                                     }
-                                    // Always create the full matched text with the URL click event
-                                    // Don't return current.getContent() because current might be a partial segment
-                                    return Text.literal(match1.match).fillStyle(current.getStyle().withClickEvent(new ClickEvent.OpenUrl(URI.create(url))));
+                                    return Component.literal(match1.match).withStyle(current.getStyle().withClickEvent(new ClickEvent.OpenUrl(URI.create(url))));
                                 });
                     }
-                    text = TextUtil.replaceStrings(text, insert);
-                    return Optional.of(text);
+                    Component result = TextUtil.replaceStrings(msg, insert);
+                    return Optional.of(result);
                 },
                 -1);
         registerPreFilter(
                 (IMessageProcessor)
-                        (text, orig) -> {
+                        (msg, orig) -> {
                             LogManager.getLogger()
                                     .info(
                                             "[CHAT] {}",
-                                            text.getString()
+                                            msg.getString()
                                                     .replaceAll("\r", "\\\\r")
                                                     .replaceAll("\n", "\\\\n"));
                             return true;
@@ -100,28 +96,36 @@ public class MessageDispatcher {
                 -1);
     }
 
-    /**
-     * This is ONLY used for new messages in chat
-     *
-     * <p>Note: It is not recommended to call this method to force add new text. Typically, grabbing
-     * the {@link net.minecraft.client.gui.hud.ChatHud} from {@link
-     * net.minecraft.client.MinecraftClient} and calling addText is a safer way.
-     *
-     * @param text Text that is received
-     */
-    public void handleText(Text text, @Nullable MessageSignatureData signature, @Nullable MessageIndicator indicator) {
+    public void handleText(Component text, @Nullable MessageSignature signature, @Nullable GuiMessageTag tag) {
         boolean previouslyBlank = text.getString().isEmpty();
-        text = preFilter(text, signature, indicator);
+        text = preFilter(text, signature, tag);
         if (text.getString().isEmpty() && !previouslyBlank) {
-            // No more
             return;
         }
-        process(text, signature, indicator);
+        process(text, signature, tag);
     }
 
-    private Text preFilter(Text text, @Nullable MessageSignatureData signature, @Nullable MessageIndicator indicator) {
+    /**
+     * Applies preFilters only and returns the result.
+     * Used by Fabric message events (MODIFY_CHAT/MODIFY_GAME) to transform the message
+     * before vanilla displays it. Returns the original if preFilters produce an empty result.
+     */
+    public Component applyPreFilters(Component text) {
+        Component result = preFilter(text, null, null);
+        return result.getString().isEmpty() ? text : result;
+    }
+
+    /**
+     * Runs processors (history, etc.) on an already-displayed message.
+     * Used by Fabric message events (CHAT/GAME) after vanilla has shown the message.
+     */
+    public void runProcessors(Component text, @Nullable GuiMessageTag tag) {
+        process(text, null, tag);
+    }
+
+    private Component preFilter(Component text, @Nullable MessageSignature signature, @Nullable GuiMessageTag tag) {
         for (IMessageFilter f : preFilters) {
-            Optional<Text> t = f.filter(text);
+            Optional<Component> t = f.filter(text);
             if (t.isPresent()) {
                 text = t.get();
             }
@@ -129,25 +133,12 @@ public class MessageDispatcher {
         return text;
     }
 
-    private void process(Text text, @Nullable MessageSignatureData signature, @Nullable MessageIndicator indicator) {
+    private void process(Component text, @Nullable MessageSignature signature, @Nullable GuiMessageTag tag) {
         for (IMessageFilter f : processors) {
             f.filter(text);
         }
     }
 
-    /**
-     * Registers a {@link IMessageFilter} to be called to modify the text. This is to keep
-     * formatting consistent, or to stop a message from being sent.
-     *
-     * <p>If text of zero length is returned by the MessageFilter the text won't be sent to the
-     * processors.
-     *
-     * <p>Note: It's discouraged to add a IMessageFilter that doesn't modify text. For that use
-     * registerProcess
-     *
-     * @param processor IMessageFilter to modify text
-     * @param index Index to add it. Supplying a negative value will put it at the end.
-     */
     public void registerPreFilter(IMessageFilter processor, int index) {
         if (index < 0) {
             index = preFilters.size();
@@ -157,14 +148,6 @@ public class MessageDispatcher {
         }
     }
 
-    /**
-     * Register's a {@link IMessageProcessor} to handle a chat event after the message has been
-     * preprocessed.
-     *
-     * @param processor IMessageProcessor to get called back
-     * @param index Index that it will be added to. Supplying a negative value will put it at the
-     *     end.
-     */
     public void register(IMessageProcessor processor, int index) {
         if (index < 0) {
             index = processors.size();

@@ -10,11 +10,11 @@ package io.github.darkkronicle.advancedchatcore.mixin;
 import io.github.darkkronicle.advancedchatcore.chat.AdvancedChatScreen;
 import io.github.darkkronicle.advancedchatcore.chat.MessageDispatcher;
 import io.github.darkkronicle.advancedchatcore.config.ConfigStorage;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MessageSignature;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,36 +24,83 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ChatHud.class, priority = 1050)
+@Mixin(value = ChatComponent.class, priority = 1050)
 public class MixinChatHud {
 
-    @Shadow @Final private MinecraftClient client;
+    @Shadow @Final private Minecraft minecraft;
 
-    @Inject(
-            method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
-            at = @At("HEAD"),
-            cancellable = true)
-    private void addMessage(Text message, @Nullable MessageSignatureData signature, @Nullable MessageIndicator indicator, CallbackInfo ci) {
-        // Pass forward messages to dispatcher
-        MessageDispatcher.getInstance().handleText(message, signature, indicator);
-        ci.cancel();
+    // Prevent re-entering our injections when we re-call after processing
+    private static final ThreadLocal<Boolean> PROCESSING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    private Component processMessage(Component message, @Nullable MessageSignature sig, @Nullable GuiMessageTag tag) {
+        // applyPreFilters always returns a new MutableComponent (StyleFormatter is first filter)
+        Component modified = MessageDispatcher.getInstance().applyPreFilters(message);
+        // runProcessors mutates modified (prepends timestamp to siblings) and adds to ChatHistory
+        MessageDispatcher.getInstance().runProcessors(modified, tag);
+        return modified;
     }
 
-    @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
+    // Confirmed signature from Minecraft 26.1.2 jar: addPlayerMessage(Component, MessageSignature, GuiMessageTag)
+    @Inject(
+            method = "addPlayerMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
+            at = @At("HEAD"), cancellable = true, require = 0)
+    private void onAddPlayerMessage(Component message, @Nullable MessageSignature sig, @Nullable GuiMessageTag tag, CallbackInfo ci) {
+        if (PROCESSING.get()) return;
+        PROCESSING.set(true);
+        try {
+            Component modified = processMessage(message, sig, tag);
+            ((ChatComponent)(Object)this).addPlayerMessage(modified, sig, tag);
+            ci.cancel();
+        } finally {
+            PROCESSING.set(false);
+        }
+    }
+
+    // Confirmed signature from Minecraft 26.1.2 jar: addServerSystemMessage(Component) — one param
+    @Inject(
+            method = "addServerSystemMessage(Lnet/minecraft/network/chat/Component;)V",
+            at = @At("HEAD"), cancellable = true, require = 0)
+    private void onAddServerSystemMessage(Component message, CallbackInfo ci) {
+        if (PROCESSING.get()) return;
+        PROCESSING.set(true);
+        try {
+            Component modified = processMessage(message, null, null);
+            ((ChatComponent)(Object)this).addServerSystemMessage(modified);
+            ci.cancel();
+        } finally {
+            PROCESSING.set(false);
+        }
+    }
+
+    // Confirmed signature from Minecraft 26.1.2 jar: addClientSystemMessage(Component) — one param
+    @Inject(
+            method = "addClientSystemMessage(Lnet/minecraft/network/chat/Component;)V",
+            at = @At("HEAD"), cancellable = true, require = 0)
+    private void onAddClientSystemMessage(Component message, CallbackInfo ci) {
+        if (PROCESSING.get()) return;
+        PROCESSING.set(true);
+        try {
+            Component modified = processMessage(message, null, null);
+            ((ChatComponent)(Object)this).addClientSystemMessage(modified);
+            ci.cancel();
+        } finally {
+            PROCESSING.set(false);
+        }
+    }
+
+    // clearMessages is the real method name in 26.1 (not "clear")
+    @Inject(method = "clearMessages", at = @At("HEAD"), cancellable = true, require = 0)
     private void clearMessages(boolean clearTextHistory, CallbackInfo ci) {
         if (!clearTextHistory) {
-            // This only gets called if it is the keybind f3 + d
             return;
         }
         if (!ConfigStorage.General.CLEAR_ON_DISCONNECT.config.getBooleanValue()) {
-            // Cancel clearing if it's turned off
             ci.cancel();
         }
     }
 
-    @Inject(method = "isChatFocused", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "isChatFocused", at = @At("HEAD"), cancellable = true, require = 0)
     private void isChatFocused(CallbackInfoReturnable<Boolean> ci) {
-        // If the chat is focused
-        ci.setReturnValue(AdvancedChatScreen.PERMANENT_FOCUS || client.currentScreen instanceof AdvancedChatScreen);
+        ci.setReturnValue(AdvancedChatScreen.PERMANENT_FOCUS || minecraft.screen instanceof AdvancedChatScreen);
     }
 }

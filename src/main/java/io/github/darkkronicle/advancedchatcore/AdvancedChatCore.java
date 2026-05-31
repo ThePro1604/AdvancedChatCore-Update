@@ -21,12 +21,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Random;
+import io.github.darkkronicle.advancedchatcore.chat.MessageDispatcher;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -66,13 +68,14 @@ public class AdvancedChatCore implements ClientModInitializer {
         // Important to get first since configuration options depend on colors
         Colors.getInstance().load();
         InitializationHandler.getInstance().registerInitializationHandler(new InitHandler());
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         ClientTickEvents.START_CLIENT_TICK.register(
                 s -> {
                     // Allow for delayed tasks to be added
-                    SyncTaskQueue.getInstance().update(s.inGameHud.getTicks());
+                    // TODO: verify tick count method name on Gui in 26.1 (was inGameHud.getTicks())
+                    SyncTaskQueue.getInstance().update(s.gui.getGuiTicks());
                     // Make sure we're not in the sleeping screen while awake
-                    if (client.currentScreen instanceof AdvancedSleepingChatScreen
+                    if (client.screen instanceof AdvancedSleepingChatScreen
                             && !client.player.isSleeping()) {
                         GuiBase.openGui(null);
                     }
@@ -83,6 +86,11 @@ public class AdvancedChatCore implements ClientModInitializer {
                 LOGGER.debug("Cleared chat successfully");
             }
         });
+
+        // Message interception (preFilters, timestamp, history) is handled in MixinChatHud
+        // by injecting into addPlayerMessage/addServerSystemMessage/addClientSystemMessage
+        // with correct 26.1.2 signatures. Fabric CHAT/GAME events are not used to avoid
+        // double-processing.
     }
 
     /**
@@ -118,13 +126,14 @@ public class AdvancedChatCore implements ClientModInitializer {
      * @return The server address if connected, 'singleplayer' if singleplayer, 'none' if none.
      */
     public static String getServer() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.isInSingleplayer()) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.hasSingleplayerServer()) {
             return "singleplayer";
         }
-        if (client.getCurrentServerEntry() == null) {
+        // TODO: verify method name for getCurrentServerEntry in Minecraft 26.1
+        if (client.getCurrentServer() == null) {
             return "none";
         }
-        return client.getCurrentServerEntry().address;
+        return client.getCurrentServer().ip;
     }
 }

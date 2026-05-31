@@ -8,7 +8,7 @@
 package io.github.darkkronicle.advancedchatcore.util;
 
 import lombok.experimental.UtilityClass;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
 
 /**
  * A static utility class that helps when dealing with colors that use bit shifting, like Minecraft.
@@ -56,7 +56,7 @@ public class ColorUtil {
         return color.withAlpha((int) Math.floor((alpha * percent)));
     }
 
-    public Color colorFromFormatting(Formatting formatting) {
-        return new Color(formatting.getColorValue());
+    public Color colorFromFormatting(ChatFormatting formatting) {
+        return new Color(formatting.getColor() != null ? formatting.getColor() : 0xFFFFFF);
     }
 }

@@ -8,11 +8,11 @@
 package io.github.darkkronicle.advancedchatcore.interfaces;
 
 import io.github.darkkronicle.advancedchatcore.util.SearchResult;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An interface to receive text and matches to process.
+ * An interface to receive Component and matches to process.
  *
  * <p>Similar to {@link IMessageProcessor} but it takes matches and can return a {@link Result}
  */
@@ -43,20 +43,20 @@ public interface IMatchProcessor extends IMessageProcessor {
     }
 
     @Override
-    default boolean process(Text text, Text unfiltered) {
+    default boolean process(Component text, Component unfiltered) {
         return processMatches(text, unfiltered, null).success;
     }
 
     /**
      * Process specific matches and return how the rest of the processors should be handled
      *
-     * @param text Final text
+     * @param Component Final Component
      * @param unfiltered Unfiltered version of text. If not available null.
      * @param search {@link SearchResult} matches
      * @return The {@link Result} that the method performed
      */
     Result processMatches(
-            Text text, @Nullable Text unfiltered, @Nullable SearchResult search);
+            Component text, @Nullable Component unfiltered, @Nullable SearchResult search);
 
     /**
      * Whether or not this processor should only trigger when matches are present. If false {@link

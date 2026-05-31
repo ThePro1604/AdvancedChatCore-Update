@@ -28,8 +28,8 @@ import io.github.darkkronicle.advancedchatcore.util.StringMatch;
 import io.github.darkkronicle.advancedchatcore.util.TextUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 import java.util.*;
 
@@ -62,10 +62,10 @@ public class InitHandler implements IInitializationHandler {
         );
 
         ProfanityUtil.getInstance().loadConfigs();
-        MessageDispatcher.getInstance().registerPreFilter(text -> {
+        MessageDispatcher.getInstance().registerPreFilter(msg -> {
             if (ConfigStorage.General.FILTER_PROFANITY.config.getBooleanValue()) {
                 List<StringMatch> profanity =
-                        ProfanityUtil.getInstance().getBadWords(text.getString(), (float) ConfigStorage.General.PROFANITY_ABOVE.config.getDoubleValue(), ConfigStorage.General.PROFANITY_ON_WORD_BOUNDARIES.config.getBooleanValue());
+                        ProfanityUtil.getInstance().getBadWords(msg.getString(), (float) ConfigStorage.General.PROFANITY_ABOVE.config.getDoubleValue(), ConfigStorage.General.PROFANITY_ON_WORD_BOUNDARIES.config.getBooleanValue());
                 if (profanity.size() == 0) {
                     return Optional.empty();
                 }
@@ -73,11 +73,11 @@ public class InitHandler implements IInitializationHandler {
                         new HashMap<>();
                 for (StringMatch bad : profanity) {
                     insertions.put(bad, (current, match) ->
-                            Text.literal("*".repeat(bad.end - bad.start)).fillStyle(current.getStyle())
+                            Component.literal("*".repeat(bad.end - bad.start)).withStyle(current.getStyle())
                     );
                 }
-                text = TextUtil.replaceStrings(text, insertions);
-                return Optional.of(text);
+                Component result = TextUtil.replaceStrings(msg, insertions);
+                return Optional.of(result);
             }
             return Optional.empty();
         }, -1);
@@ -101,33 +101,33 @@ public class InitHandler implements IInitializationHandler {
 
         InputHandler.getInstance().addDisplayName("core_general", "advancedchatcore.config.tab.hotkeysgeneral");
         InputHandler.getInstance().add("core_general", ConfigStorage.Hotkeys.OPEN_CHAT.config, (action, key) -> {
-            if (MinecraftClient.getInstance().world == null) {
+            if (Minecraft.getInstance().level == null) {
                 return true;
             }
             GuiBase.openGui(new AdvancedChatScreen(""));
             return true;
         });
         InputHandler.getInstance().add("core_general", ConfigStorage.Hotkeys.OPEN_CHAT_WITH_LAST.config, (action, key) -> {
-            if (MinecraftClient.getInstance().world == null) {
+            if (Minecraft.getInstance().level == null) {
                 return true;
             }
             GuiBase.openGui(new AdvancedChatScreen(0));
             return true;
         });
         InputHandler.getInstance().add("core_general", ConfigStorage.Hotkeys.OPEN_CHAT_FREE_MOVEMENT.config, (action, key) -> {
-            if (MinecraftClient.getInstance().world == null) {
+            if (Minecraft.getInstance().level == null) {
                 return true;
             }
             // Manually update stuff so that movement keys are continued to be pressed
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client.currentScreen != null) {
-                client.currentScreen.removed();
+            Minecraft client = Minecraft.getInstance();
+            if (client.screen != null) {
+                client.screen.removed();
             }
-            client.currentScreen = new AdvancedChatScreen(true);
-            client.mouse.unlockCursor();
-            client.currentScreen.init(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
-            client.skipGameRender = false;;
-            client.updateWindowTitle();
+            client.setScreen(new AdvancedChatScreen(true));
+            // TODO: verify mouse.unlockCursor in 26.1;
+            client.screen.init(client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
+            // TODO: skipGameRender removed in 26.1;
+            // TODO: updateWindowTitle removed in 26.1;
             return true;
         });
         InputHandler.getInstance().add("core_general", ConfigStorage.Hotkeys.TOGGLE_PERMANENT.config, (action, key) -> {

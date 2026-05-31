@@ -1,12 +1,14 @@
 package io.github.darkkronicle.advancedchatcore.util;
 
-import net.minecraft.text.*;
-import net.minecraft.util.Language;
+import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.contents.PlainTextContents;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.locale.Language;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public record RawText(String content, Style style) implements Text {
+public record RawText(String content, Style style) implements Component {
 
     @Override
     public Style getStyle() {
@@ -14,8 +16,9 @@ public record RawText(String content, Style style) implements Text {
     }
 
     @Override
-    public TextContent getContent() {
-        return PlainTextContent.of(content);
+    public ComponentContents getContents() {
+        // TODO: verify PlainTextContents.create() in 26.1
+        return PlainTextContents.create(content);
     }
 
     @Override
@@ -24,14 +27,14 @@ public record RawText(String content, Style style) implements Text {
     }
 
     @Override
-    public List<Text> getSiblings() {
+    public List<Component> getSiblings() {
         return new ArrayList<>();
     }
 
     @Override
-    public OrderedText asOrderedText() {
+    public FormattedCharSequence getVisualOrderText() {
         Language language = Language.getInstance();
-        return language.reorder(this);
+        return language.getVisualOrder(this);
     }
 
     public RawText withString(String string) {

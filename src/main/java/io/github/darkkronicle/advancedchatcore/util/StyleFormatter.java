@@ -12,19 +12,20 @@ import java.util.List;
 import java.util.Optional;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.util.ChatMessages;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.ComponentRenderUtils;
+import net.minecraft.network.chat.*;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.Unit;
 
-/** Class to format text without losing data */
+/** Class to format Component without losing data */
 @Environment(EnvType.CLIENT)
 public class StyleFormatter {
 
     /**
      * An interface to take multiple inputs from a string that has the Section Symbol formatting
-     * combined with standard {@link Text} formatting.
+     * combined with standard {@link Component} ChatFormatting.
      */
     public interface FormattingVisitable {
         /**
@@ -33,8 +34,8 @@ public class StyleFormatter {
          * @param c Current character
          * @param currentIndex The current index of the raw string
          * @param realIndex The current index without formatting symbols
-         * @param textStyle The style that the text currently has
-         * @param formattingStyle The style that combines text formatting and formatting symbols
+         * @param textStyle The style that the Component currently has
+         * @param formattingStyle The style that combines Component formatting and formatting symbols
          * @return Whether to continue
          */
         boolean accept(
@@ -54,7 +55,7 @@ public class StyleFormatter {
         /** Go up a character */
         INCREMENT,
 
-        /** Go to the next {@link StringVisitable} */
+        /** Go to the next {@link FormattedText} */
         SKIP,
 
         /** STOP */
@@ -64,7 +65,7 @@ public class StyleFormatter {
     /**
      * Creates a StyleFormatter for a given length and a {@link FormattingVisitable}
      *
-     * <p>This class is meant to be updated with a {@link StringVisitable.StyledVisitor}
+     * <p>This class is meant to be updated with a {@link FormattedText.StyledVisitor}
      *
      * @param visitor {@link FormattingVisitable} to get updated with each visible character
      * @param length Length of the string
@@ -99,15 +100,15 @@ public class StyleFormatter {
                 int blue = Integer.parseInt(format.substring(4, 6), 16);
                 TextColor color = TextColor.fromRgb(new Color(red, green, blue, 255).color());
                 if (currentStyle.equals(Style.EMPTY) || currentStyle.equals(textStyle)) {
-                    // If it's empty or different rely on just the current text style
+                    // If it's empty or different rely on just the current Component style
                     // Arbitrary color
-                    currentStyle = textStyle.withExclusiveFormatting(Formatting.BLACK);
+                    currentStyle = textStyle.applyFormat(ChatFormatting.BLACK);
                 } else {
                     // Styles are different so we take what happened before. This allows us to chain
                     // formatting symbols.
 
                     // Arbitrary color to reset
-                    currentStyle = currentStyle.withExclusiveFormatting(Formatting.BLACK);
+                    currentStyle = currentStyle.applyFormat(ChatFormatting.BLACK);
                 }
                 currentStyle = currentStyle.withColor(color);
                 currentIndex += 7;
@@ -115,19 +116,19 @@ public class StyleFormatter {
             }
             return Result.INCREMENT;
         }
-        Formatting formatting = Formatting.byCode(nextChar);
+        ChatFormatting formatting = ChatFormatting.getByCode(nextChar);
         if (formatting != null) {
-            if (formatting == Formatting.RESET) {
-                // If it resets, just go to what the current text is.
+            if (formatting == ChatFormatting.RESET) {
+                // If it resets, just go to what the current Component is.
                 currentStyle = textStyle;
             } else {
                 if (currentStyle.equals(Style.EMPTY) || currentStyle.equals(textStyle)) {
-                    // If it's empty or different rely on just the current text style
-                    currentStyle = textStyle.withExclusiveFormatting(formatting);
+                    // If it's empty or different rely on just the current Component style
+                    currentStyle = textStyle.applyFormat(formatting);
                 } else {
                     // Styles are different so we take what happened before. This allows us to chain
                     // formatting symbols.
-                    currentStyle = currentStyle.withExclusiveFormatting(formatting);
+                    currentStyle = currentStyle.applyFormat(formatting);
                 }
             }
             if (currentStyle.equals(Style.EMPTY)) {
@@ -146,7 +147,7 @@ public class StyleFormatter {
      *
      * @param textStyle Style of the current string
      * @param string The current string
-     * @return Value to terminate. Follows {@link StringVisitable.StyledVisitor} return values.
+     * @return Value to terminate. Follows {@link FormattedText.StyledContentConsumer} return values.
      */
     public Optional<Optional<Unit>> updateStyle(Style textStyle, String string) {
         if (lastTextStyle == null) {
@@ -166,7 +167,7 @@ public class StyleFormatter {
                     case SKIP:
                         return Optional.empty();
                     case TERMINATE:
-                        return Optional.of(StringVisitable.TERMINATE_VISIT);
+                        return Optional.of(Optional.of(net.minecraft.util.Unit.INSTANCE));
                     case INCREMENT:
                         i++;
                 }
@@ -174,7 +175,7 @@ public class StyleFormatter {
             } else if (sendToVisitor(c, textStyle)) {
                 realIndex++;
             } else {
-                return Optional.of(StringVisitable.TERMINATE_VISIT);
+                return Optional.of(Optional.of(net.minecraft.util.Unit.INSTANCE));
             }
             currentIndex++;
         }
@@ -183,23 +184,23 @@ public class StyleFormatter {
     }
 
     /**
-     * Formats text that contains styling data as well as formatting symbols
+     * Formats Component that contains styling data as well as formatting symbols
      *
      * <p>This method is used to remove section symbols while maintaining previous formatting as
-     * well as new formatting.
+     * well as new ChatFormatting.
      *
-     * @param text Text to reformat
-     * @return Formatted text
+     * @param Component text to reformat
+     * @return Formatted Component
      */
-    public static MutableText formatText(Text text) {
+    public static MutableComponent formatText(Component text) {
         String originalString = text.getString();
-        MutableText t = Text.empty();
+        MutableComponent t = Component.empty();
         int length = originalString.length();
 
         StyleFormatter formatter =
                 new StyleFormatter(
                         (c, index, formattedIndex, style, formattedStyle) -> {
-                            t.append(Text.literal(String.valueOf(c)).fillStyle(formattedStyle));
+                            t.append(Component.literal(String.valueOf(c)).withStyle(formattedStyle));
                             return true;
                         },
                         length);
@@ -208,12 +209,11 @@ public class StyleFormatter {
         return flattenText(t);
     }
 
-    public static MutableText flattenText(Text text) {
-        // Use TextBuilder which properly handles Text visiting to avoid losing content
+    public static MutableComponent flattenText(Component text) {
         TextBuilder builder = new TextBuilder();
         builder.append(text);
 
-        MutableText newText = Text.empty();
+        MutableComponent newText = Component.empty();
         Style lastStyle = null;
         StringBuilder accumulated = new StringBuilder();
 
@@ -225,33 +225,34 @@ public class StyleFormatter {
                 accumulated.append(raw.getString());
             } else {
                 if (accumulated.length() > 0) {
-                    newText.append(Text.literal(accumulated.toString()).fillStyle(lastStyle));
+                    newText.append(Component.literal(accumulated.toString()).withStyle(lastStyle));
                 }
                 accumulated = new StringBuilder(raw.getString());
                 lastStyle = raw.getStyle();
             }
         }
 
-        // Add any remaining accumulated text
+        // Add any remaining accumulated Component
         if (accumulated.length() > 0 && lastStyle != null) {
-            newText.append(Text.literal(accumulated.toString()).fillStyle(lastStyle));
+            newText.append(Component.literal(accumulated.toString()).withStyle(lastStyle));
         }
 
         return newText;
     }
 
     /**
-     * Wraps text into multiple lines
+     * Wraps Component into multiple lines
      *
-     * @param textRenderer TextRenderer to handle text
+     * @param font Font to handle Component
      * @param scaledWidth Maximum width before the line breaks
-     * @param text Text to break up
-     * @return List of MutableText of the new lines
+     * @param Component text to break up
+     * @return List of Component of the new lines
+     * TODO: verify ComponentRenderUtils.wrapComponents is the correct class/method in 26.1
      */
-    public static List<Text> wrapText(TextRenderer textRenderer, int scaledWidth, Text text) {
-        ArrayList<Text> lines = new ArrayList<>();
-        for (OrderedText breakRenderedChatMessageLine : ChatMessages.breakRenderedChatMessageLines(text, scaledWidth, textRenderer)) {
-            lines.add(new TextBuilder().append(breakRenderedChatMessageLine).build());
+    public static List<Component> wrapText(Font font, int scaledWidth, Component text) {
+        ArrayList<Component> lines = new ArrayList<>();
+        for (FormattedCharSequence line : ComponentRenderUtils.wrapComponents(text, scaledWidth, font)) {
+            lines.add(new TextBuilder().append(line).build());
         }
         return lines;
     }
