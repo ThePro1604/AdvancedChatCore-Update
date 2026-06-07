@@ -58,7 +58,8 @@ public class CleanButton extends ButtonBase {
         if (hovered) {
             color = Colors.getInstance().getColor("white").get().withAlpha(color.alpha());
         }
-        RenderUtils.drawRect(x, y, width, height, color.color());
+        // Use drawContext.fill directly — RenderUtils.drawRect is not reliable in 26.1
+        drawContext.fill(x, y, x + width, y + height, color.color());
         drawCenteredString(
                 context,
                 (x + (width / 2)),

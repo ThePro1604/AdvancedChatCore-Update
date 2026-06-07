@@ -29,6 +29,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.Component;
@@ -148,7 +149,7 @@ public class AdvancedChatScreen extends GuiBase {
         this.chatField.setResponder(this::onChatFieldUpdate);
 
         // Add settings button
-        rightSideButtons.add("settings", new IconButton(0, 0, 14, 64, Identifier.fromNamespaceAndPath(AdvancedChatCore.MOD_ID, "textures/gui/settings.png"), (button) -> GuiBase.openGui(GuiConfigHandler.getInstance().getDefaultScreen())));
+        rightSideButtons.add("settings", new IconButton(0, 0, 14, 64, Identifier.fromNamespaceAndPath(AdvancedChatCore.MOD_ID, "settings"), (button) -> GuiBase.openGui(GuiConfigHandler.getInstance().getDefaultScreen())));
 
         // TODO: verify malilib addSelectableChild in 26.1;
 
@@ -168,7 +169,6 @@ public class AdvancedChatScreen extends GuiBase {
                 maxHeight = Math.max(maxHeight, button.getHeight());
                 x -= button.getWidth() + 1;
                 button.setPosition(x, y);
-                addButton(button, null);
             }
             y -= maxHeight + 1;
         }
@@ -181,7 +181,6 @@ public class AdvancedChatScreen extends GuiBase {
             for (ButtonBase button : buttonList) {
                 maxHeight = Math.max(maxHeight, button.getHeight());
                 button.setPosition(x, y);
-                addButton(button, null);
                 x += button.getWidth() + 1;
             }
             y -= maxHeight + 1;
@@ -312,6 +311,21 @@ public class AdvancedChatScreen extends GuiBase {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        // Check our custom side buttons first (we don't use addButton so must handle clicks manually)
+        for (int i = 0; i < rightSideButtons.rowSize(); i++) {
+            for (fi.dy.masa.malilib.gui.button.ButtonBase btn : rightSideButtons.get(i)) {
+                if (btn.onMouseClicked(click, doubled)) {
+                    return true;
+                }
+            }
+        }
+        for (int i = 0; i < leftSideButtons.rowSize(); i++) {
+            for (fi.dy.masa.malilib.gui.button.ButtonBase btn : leftSideButtons.get(i)) {
+                if (btn.onMouseClicked(click, doubled)) {
+                    return true;
+                }
+            }
+        }
         for (AdvancedChatScreenSection section : sections) {
             if (section.mouseClicked(click, doubled)) {
                 return true;
@@ -320,7 +334,7 @@ public class AdvancedChatScreen extends GuiBase {
         ChatComponent hud = Minecraft.getInstance().gui.getChat();
         Style style = io.github.darkkronicle.advancedchatcore.util.ChatHudHelper.getTextStyleAt(hud, click.x(), click.y());
         if (style != null && style.getClickEvent() != null) {
-            /* TODO: handleClickEvent in 26.1 */;
+            handleClickEvent(style.getClickEvent());
             return true;
         }
         return (this.chatField.mouseClicked(click, doubled)
@@ -353,6 +367,24 @@ public class AdvancedChatScreen extends GuiBase {
             this.chatField.setText(text);
         } else {
             this.chatField.insertText(text);
+        }
+    }
+
+    private void handleClickEvent(ClickEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (event instanceof ClickEvent.RunCommand cmd) {
+            String command = cmd.command();
+            if (command.startsWith("/")) command = command.substring(1);
+            if (mc.player != null && mc.player.connection != null) {
+                mc.player.connection.sendCommand(command);
+            }
+            GuiBase.openGui(null);
+        } else if (event instanceof ClickEvent.OpenUrl openUrl) {
+            net.minecraft.util.Util.getPlatform().openUri(openUrl.uri());
+        } else if (event instanceof ClickEvent.SuggestCommand suggest) {
+            chatField.setText(suggest.command());
+        } else if (event instanceof ClickEvent.CopyToClipboard copy) {
+            mc.keyboardHandler.setClipboard(copy.value());
         }
     }
 
@@ -393,9 +425,22 @@ public class AdvancedChatScreen extends GuiBase {
         for (AdvancedChatScreenSection section : sections) {
             section.extractRenderState(drawContext, mouseX, mouseY, partialTicks);
         }
+        // Render our custom buttons AFTER the chat (so they appear on top of messages).
+        // malilib's drawButtons fires before drawContents, which means chat overdrew them.
+        for (int i = 0; i < rightSideButtons.rowSize(); i++) {
+            for (fi.dy.masa.malilib.gui.button.ButtonBase btn : rightSideButtons.get(i)) {
+                btn.render(ctx, mouseX, mouseY, false);
+            }
+        }
+        for (int i = 0; i < leftSideButtons.rowSize(); i++) {
+            for (fi.dy.masa.malilib.gui.button.ButtonBase btn : leftSideButtons.get(i)) {
+                btn.render(ctx, mouseX, mouseY, false);
+            }
+        }
+
         Style style = io.github.darkkronicle.advancedchatcore.util.ChatHudHelper.getTextStyleAt(hud, mouseX, mouseY);
         if (style != null && style.getHoverEvent() != null) {
-            // TODO: componentHoverEffect is private in 26.1
+            io.github.darkkronicle.advancedchatcore.util.ChatHudHelper.renderHoverTooltip(drawContext, style, mouseX, mouseY);
         }
     }
 

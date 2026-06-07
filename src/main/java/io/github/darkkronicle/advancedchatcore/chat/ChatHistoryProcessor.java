@@ -49,7 +49,9 @@ public class ChatHistoryProcessor implements IMessageProcessor {
                     ConfigStorage.General.TIME_TEXT_FORMAT.config.getStringValue().replaceAll("&", "§");
             Color4f color = ConfigStorage.General.TIME_COLOR.config.getColor();
             Style style = Style.EMPTY.withColor(TextColor.fromRgb(color.getIntValue()));
-            text.getSiblings().addFirst(Component.literal(replaceFormat.replaceAll("%TIME%", time.format(format))).withStyle(style));
+            // In 26.1 getSiblings() returns an immutable list — prepend by creating a new component
+            Component timestamp = Component.literal(replaceFormat.replaceAll("%TIME%", time.format(format))).withStyle(style);
+            text = Component.empty().append(timestamp).append(text);
         }
 
         MessageOwner player = SearchUtils.getAuthor(Minecraft.getInstance().getConnection(), unfiltered.getString());
