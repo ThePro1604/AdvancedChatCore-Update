@@ -25,8 +25,8 @@ public class MixinMinecraftClient {
     @Inject(method = "openChatScreen",
             at = @At(value = "HEAD"), cancellable = true)
     public void openChatScreen(ChatComponent.ChatMethod method, CallbackInfo ci) {
-        // TODO: verify ChatComponent.ChatMethod accessor for pre-filled text in 26.1
-        Minecraft.getInstance().setScreen(new AdvancedChatScreen(""));
+        // method.prefix() returns "/" for COMMAND (slash key) or "" for MESSAGE (T key)
+        Minecraft.getInstance().setScreen(new AdvancedChatScreen(method.prefix()));
         ci.cancel();
     }
 }
