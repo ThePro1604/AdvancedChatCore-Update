@@ -91,7 +91,7 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
 
         renderEntry(context, mouseX, mouseY, selected);
 
-        // TODO: drawTextFields API in malilib 26.1
+        drawTextFields(mouseX, mouseY, (GuiGraphicsExtractor)(Object) context.getGuiGraphics());
 
         super.render(context, mouseX, mouseY, selected);
     }
@@ -184,7 +184,9 @@ public abstract class WidgetConfigListEntry<TYPE> extends WidgetListEntryBase<TY
             return;
         }
         for (TextFieldWrapper<GuiTextFieldGeneric> field : getTextFields()) {
-            // TODO: textField render API in malilib 26.1;
+            if (field != null) {
+                field.textField().extractWidgetRenderState(context, mouseX, mouseY, 0f);
+            }
         }
     }
 }
