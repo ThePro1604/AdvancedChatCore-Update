@@ -5,11 +5,14 @@
   "name": "AdvancedChatCore",
   "description": "The core of all AdvancedChat features",
   "authors": [
-    "DarkKronicle",
+    "ThePro1604"
+  ],
+  "contributors": [
+    "DarkKronicle (original author)",
     "EnricoMessall"
   ],
   "contact": {
-    "homepage": "https://arematics.com",
+    "homepage": "https://github.com/ThePro1604",
     "sources": "https://github.com/Arematics/AdvancedChatCore",
     "issues": "https://github.com/Arematics/AdvancedChatCore/issues"
   },
@@ -18,10 +21,10 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "io.github.darkkronicle.advancedchatcore.AdvancedChatCore"
+      "io.github.thepro1604.advancedchatcore.AdvancedChatCore"
     ],
     "modmenu": [
-      "io.github.darkkronicle.advancedchatcore.config.gui.ModMenuImpl"
+      "io.github.thepro1604.advancedchatcore.config.gui.ModMenuImpl"
     ]
   },
   "mixins": [

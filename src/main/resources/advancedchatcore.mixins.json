@@ -1,6 +1,6 @@
 {
   "required": false,
-  "package": "io.github.darkkronicle.advancedchatcore.mixin",
+  "package": "io.github.thepro1604.advancedchatcore.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
