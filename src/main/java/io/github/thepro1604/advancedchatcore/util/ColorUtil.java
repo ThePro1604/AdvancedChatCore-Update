@@ -9,6 +9,7 @@ package io.github.thepro1604.advancedchatcore.util;
 
 import lombok.experimental.UtilityClass;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TextColor;
 
 /**
  * A static utility class that helps when dealing with colors that use bit shifting, like Minecraft.
@@ -57,6 +58,7 @@ public class ColorUtil {
     }
 
     public Color colorFromFormatting(ChatFormatting formatting) {
-        return new Color(formatting.getColor() != null ? formatting.getColor() : 0xFFFFFF);
+        TextColor textColor = TextColor.fromLegacyFormat(formatting);
+        return new Color(textColor != null ? textColor.getValue() : 0xFFFFFF);
     }
 }

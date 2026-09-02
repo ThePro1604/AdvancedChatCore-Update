@@ -106,7 +106,7 @@ public class AdvancedChatScreen extends GuiBase {
     }
 
     public void resetCurrentMessage() {
-                this.messageHistorySize = Minecraft.getInstance().gui.getChat().getRecentChat().size();
+                this.messageHistorySize = Minecraft.getInstance().gui.hud.getChat().getRecentChat().size();
     }
 
     @Override
@@ -266,13 +266,13 @@ public class AdvancedChatScreen extends GuiBase {
         if (input.key() == KeyCodes.KEY_PAGE_UP) {
             // Scroll
             // TODO: verify getVisibleLineCount() in ChatComponent 26.1
-            Minecraft.getInstance().gui.getChat().scrollChat(Minecraft.getInstance().gui.getChat().getLinesPerPage() - 1);
+            Minecraft.getInstance().gui.hud.getChat().scrollChat(Minecraft.getInstance().gui.hud.getChat().getLinesPerPage() - 1);
             return true;
         }
         if (input.key() == KeyCodes.KEY_PAGE_DOWN) {
             // Scroll
             // TODO: verify getVisibleLineCount() in ChatComponent 26.1
-            Minecraft.getInstance().gui.getChat().scrollChat(-(Minecraft.getInstance().gui.getChat().getLinesPerPage() - 1));
+            Minecraft.getInstance().gui.hud.getChat().scrollChat(-(Minecraft.getInstance().gui.hud.getChat().getLinesPerPage() - 1));
             return true;
         }
         if (passEvents) {
@@ -305,7 +305,7 @@ public class AdvancedChatScreen extends GuiBase {
         }
 
         // Send to hud to scroll
-        Minecraft.getInstance().gui.getChat().scrollChat((int) verticalAmount);
+        Minecraft.getInstance().gui.hud.getChat().scrollChat((int) verticalAmount);
         return true;
     }
 
@@ -331,7 +331,7 @@ public class AdvancedChatScreen extends GuiBase {
                 return true;
             }
         }
-        ChatComponent hud = Minecraft.getInstance().gui.getChat();
+        ChatComponent hud = Minecraft.getInstance().gui.hud.getChat();
         Style style = io.github.thepro1604.advancedchatcore.util.ChatHudHelper.getTextStyleAt(hud, click.x(), click.y());
         if (style != null && style.getClickEvent() != null) {
             handleClickEvent(style.getClickEvent());
@@ -390,7 +390,7 @@ public class AdvancedChatScreen extends GuiBase {
 
     public void setChatFromHistory(int i) {
         int targetIndex = this.messageHistorySize + i;
-                int maxIndex = Minecraft.getInstance().gui.getChat().getRecentChat().size();
+                int maxIndex = Minecraft.getInstance().gui.hud.getChat().getRecentChat().size();
         targetIndex = Mth.clamp(targetIndex, 0, maxIndex);
         if (targetIndex != this.messageHistorySize) {
             if (targetIndex == maxIndex) {
@@ -401,7 +401,7 @@ public class AdvancedChatScreen extends GuiBase {
                     this.finalHistory = this.chatField.getText();
                 }
 
-                String hist = Minecraft.getInstance().gui.getChat().getRecentChat().get(targetIndex);
+                String hist = Minecraft.getInstance().gui.hud.getChat().getRecentChat().get(targetIndex);
                 this.chatField.setText(hist);
                 for (AdvancedChatScreenSection section : sections) {
                     section.setChatFromHistory(hist);
@@ -414,10 +414,10 @@ public class AdvancedChatScreen extends GuiBase {
     @Override
     protected void drawContents(GuiContext ctx, int mouseX, int mouseY, float partialTicks) {
         GuiGraphicsExtractor drawContext = (GuiGraphicsExtractor) (Object) ctx.getGuiGraphics();
-        ChatComponent hud = Minecraft.getInstance().gui.getChat();
+        ChatComponent hud = Minecraft.getInstance().gui.hud.getChat();
         // FOREGROUND = show messages; true = chat screen is focused/open
         hud.extractRenderState(drawContext, Minecraft.getInstance().font,
-                Minecraft.getInstance().gui.getGuiTicks(), mouseX, mouseY,
+                Minecraft.getInstance().gui.hud.getGuiTicks(), mouseX, mouseY,
                 ChatComponent.DisplayMode.FOREGROUND, true);
         this.setFocused(this.chatField);
         this.chatField.setFocused(true);

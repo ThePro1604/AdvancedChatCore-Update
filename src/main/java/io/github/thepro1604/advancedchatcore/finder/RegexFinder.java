@@ -191,10 +191,11 @@ public class RegexFinder extends PatternFinder {
                     continue;
                 }
                 ChatFormatting formatting = ChatFormatting.getByCode(val);
-                if (formatting == null || !formatting.isColor()) {
+                TextColor formattingColor = formatting == null ? null : TextColor.fromLegacyFormat(formatting);
+                if (formattingColor == null) {
                     continue;
                 }
-                if (color.getValue() == formatting.getColor()) {
+                if (color.getValue() == formattingColor.getValue()) {
                     return true;
                 }
             }

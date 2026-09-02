@@ -120,12 +120,11 @@ public class InitHandler implements IInitializationHandler {
             }
             // Manually update stuff so that movement keys are continued to be pressed
             Minecraft client = Minecraft.getInstance();
-            if (client.screen != null) {
-                client.screen.removed();
+            if (client.gui.screen() != null) {
+                client.gui.screen().removed();
             }
-            client.setScreen(new AdvancedChatScreen(true));
-            // TODO: verify mouse.unlockCursor in 26.1;
-            client.screen.init(client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
+            client.setScreenAndShow(new AdvancedChatScreen(true));
+            client.gui.screen().init(client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
             // TODO: skipGameRender removed in 26.1;
             // TODO: updateWindowTitle removed in 26.1;
             return true;

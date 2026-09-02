@@ -101,6 +101,6 @@ public class MixinChatHud {
 
     @Inject(method = "isChatFocused", at = @At("HEAD"), cancellable = true, require = 0)
     private void isChatFocused(CallbackInfoReturnable<Boolean> ci) {
-        ci.setReturnValue(AdvancedChatScreen.PERMANENT_FOCUS || minecraft.screen instanceof AdvancedChatScreen);
+        ci.setReturnValue(AdvancedChatScreen.PERMANENT_FOCUS || minecraft.gui.screen() instanceof AdvancedChatScreen);
     }
 }

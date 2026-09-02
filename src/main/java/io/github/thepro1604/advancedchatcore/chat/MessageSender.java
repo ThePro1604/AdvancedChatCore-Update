@@ -49,7 +49,7 @@ public class MessageSender {
             string = string.substring(0, 256);
         }
         // TODO: verify method name "addRecentChat" in ChatComponent 26.1
-        this.client.gui.getChat().addRecentChat(unfiltered);
+        this.client.gui.hud.getChat().addRecentChat(unfiltered);
 
         if (string.isEmpty()) {
             AdvancedChatCore.LOGGER.log(Level.WARN, "Blank message was attempted to be sent. " + unfiltered);

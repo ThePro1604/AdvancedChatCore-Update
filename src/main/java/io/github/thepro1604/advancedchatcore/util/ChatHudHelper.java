@@ -93,7 +93,7 @@ public class ChatHudHelper {
         chatComponent.captureClickableText(
                 finder,
                 mc.getWindow().getGuiScaledHeight(),
-                mc.gui.getGuiTicks(),
+                mc.gui.hud.getGuiTicks(),
                 ChatComponent.DisplayMode.FOREGROUND);
         return finder.result();
     }

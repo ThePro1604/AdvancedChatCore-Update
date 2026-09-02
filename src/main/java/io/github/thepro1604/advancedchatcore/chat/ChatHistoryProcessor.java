@@ -61,7 +61,7 @@ public class ChatHistoryProcessor implements IMessageProcessor {
                 .owner(player)
                 .id(0)
                 .width(0)
-                .creationTick(Minecraft.getInstance().gui.getGuiTicks())
+                .creationTick(Minecraft.getInstance().gui.hud.getGuiTicks())
                 .time(time)
                 .backgroundColor(null)
                 .build();
