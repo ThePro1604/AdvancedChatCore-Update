@@ -23,12 +23,10 @@ public class WidgetColor extends GuiTextFieldGeneric {
 
     public WidgetColor(
             int x, int y, int width, int height, Color color, Font font) {
-        // TODO: verify GuiTextFieldGeneric constructor signature in malilib 26.1
         super(x, y, width - 22, height, font);
         this.colorX = x + width - 20;
         this.currentColor = color;
-        // TODO: verify setText method in malilib GuiTextFieldGeneric 26.1
-        // TODO: malilib setText - this.setText(String.format("#%08X", this.currentColor.color()));
+        this.setValue(this.currentColor.getString());
     }
 
     @Override
@@ -40,7 +38,6 @@ public class WidgetColor extends GuiTextFieldGeneric {
         RenderUtils.drawRect(this.colorX + 2, y + 2, 15, 15, this.currentColor.color());
     }
 
-    // TODO: verify "write" -> "insertText" or other rename in malilib 26.1
     public void onWrite(String text) {
         getAndRefreshColor4f();
     }
@@ -51,13 +48,12 @@ public class WidgetColor extends GuiTextFieldGeneric {
     }
 
     public Color getAndRefreshColor4f() {
-        // TODO: verify getText method in malilib GuiTextFieldGeneric 26.1
-        Optional<Color> color = Colors.getInstance().getColor("") /* TODO: getText malilib 26.1 */;
+        Optional<Color> color = Colors.getInstance().getColor(this.getValue());
         if (color.isPresent()) {
             this.currentColor = color.get();
             return this.currentColor;
         }
-        this.currentColor = new Color(StringUtils.getColor("", 0) /* TODO: getText malilib 26.1 */);
+        this.currentColor = new Color(StringUtils.getColor(this.getValue(), 0));
         return this.currentColor;
     }
 }
