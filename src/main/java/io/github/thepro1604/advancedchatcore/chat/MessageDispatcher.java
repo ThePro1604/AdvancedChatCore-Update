@@ -29,7 +29,6 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.network.chat.MutableComponent;
-import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -81,18 +80,6 @@ public class MessageDispatcher {
                     Component result = TextUtil.replaceStrings(msg, insert);
                     return Optional.of(result);
                 },
-                -1);
-        registerPreFilter(
-                (IMessageProcessor)
-                        (msg, orig) -> {
-                            LogManager.getLogger()
-                                    .info(
-                                            "[CHAT] {}",
-                                            msg.getString()
-                                                    .replaceAll("\r", "\\\\r")
-                                                    .replaceAll("\n", "\\\\n"));
-                            return true;
-                        },
                 -1);
     }
 
