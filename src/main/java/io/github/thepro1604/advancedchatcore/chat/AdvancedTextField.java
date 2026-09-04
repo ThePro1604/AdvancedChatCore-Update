@@ -49,7 +49,6 @@ public class AdvancedTextField extends EditBox {
     private Font font;
     private String suggestion = null;
     private int maxLength = 32;
-    private int selectionEnd;
     private int selectionStart;
     private BiFunction<String, Integer, FormattedCharSequence> renderTextProvider = (string, firstCharacterIndex) -> {
         // Check if the string starts with "/" to enable command highlighting
@@ -231,7 +230,6 @@ public class AdvancedTextField extends EditBox {
                 cursorRow = line;
             }
             endX = x + font.width(text);
-            context.text(font, text, x, renderY, color);
             if (selection) {
                 if (!started && selStart >= charCount && selStart <= text.getString().length() + charCount) {
                     started = true;
@@ -255,6 +253,8 @@ public class AdvancedTextField extends EditBox {
                     }
                 }
             }
+            // Highlight is drawn first so it sits behind the text, not painted over it
+            context.text(font, text, x, renderY, color);
             renderY += font.lineHeight + 2;
             charCount += text.getString().length();
         }
@@ -303,11 +303,6 @@ public class AdvancedTextField extends EditBox {
     public void setHighlightPos(int cursor) {
         this.selectionStart = Mth.clamp(cursor, 0, getValue().length());
         super.setHighlightPos(cursor);
-    }
-
-    public void setSelectionEnd(int index) {
-        int i = getValue().length();
-        this.selectionEnd = Mth.clamp(index, 0, i);
     }
 
 
@@ -385,10 +380,11 @@ public boolean keyPressed(KeyEvent input) {
 @Override
     public void deleteWords(int wordOffset) {
         if (!this.getValue().isEmpty()) {
-            if (this.selectionEnd != this.selectionStart) {
-                this.setValue("");
+            int cursor = this.getCursorPosition();
+            if (this.selectionStart != cursor) {
+                this.insertText("");
             } else {
-                this.deleteChars(this.getWordPosition(wordOffset) - this.selectionStart);
+                this.deleteChars(this.getWordPosition(wordOffset) - cursor);
             }
         }
     }
