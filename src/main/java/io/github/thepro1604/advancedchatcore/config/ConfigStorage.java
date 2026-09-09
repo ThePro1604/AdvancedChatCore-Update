@@ -189,6 +189,18 @@ public class ConfigStorage implements IConfigHandler {
                         new ConfigBoolean(
                                 translate("showchaticons"), true, translate("info.showchaticons")));
 
+        public static final SaveableConfig<ConfigBoolean> CODE_PREVIEW =
+                SaveableConfig.fromConfig(
+                        "codePreview",
+                        new ConfigBoolean(
+                                translate("codepreview"), true, translate("info.codepreview")));
+
+        public static final SaveableConfig<ConfigBoolean> CODE_PREVIEW_SHOW_CODES =
+                SaveableConfig.fromConfig(
+                        "codePreviewShowCodes",
+                        new ConfigBoolean(
+                                translate("codepreviewshowcodes"), false, translate("info.codepreviewshowcodes")));
+
         public static final SaveableConfig<ConfigColor> MODIFIED =
                 SaveableConfig.fromConfig(
                         "modified",
@@ -233,7 +245,8 @@ public class ConfigStorage implements IConfigHandler {
 
 
         public static final ImmutableList<SaveableConfig<? extends IConfigBase>> OPTIONS =
-                ImmutableList.of(PERSISTENT_TEXT, COLOR, MORE_TEXT, SHOW_CHAT_ICONS, MODIFIED, SYSTEM, FILTERED, NOT_SECURE,
+                ImmutableList.of(PERSISTENT_TEXT, COLOR, MORE_TEXT, SHOW_CHAT_ICONS, CODE_PREVIEW, CODE_PREVIEW_SHOW_CODES,
+                        MODIFIED, SYSTEM, FILTERED, NOT_SECURE,
                         COMMAND_SYNTAX_INVALID, COMMAND_SYNTAX_VALID, COMMAND_SYNTAX_ARGUMENTS);
     }
 

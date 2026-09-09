@@ -56,10 +56,17 @@ public class AdvancedTextField extends EditBox {
             return highlightCommand(string);
         }
 
+        // Code preview disabled: show the raw text with no color/formatting applied
+        if (!ConfigStorage.ChatScreen.CODE_PREVIEW.config.getBooleanValue()) {
+            return Component.literal(string).getVisualOrderText();
+        }
+
         // Convert & color codes to § section symbols only when followed by valid formatting character
         String converted = string.replaceAll("&([0-9a-fk-or])", "§$1");
         Component text = Component.literal(converted);
-        Component formatted = StyleFormatter.formatText(text);
+        Component formatted = ConfigStorage.ChatScreen.CODE_PREVIEW_SHOW_CODES.config.getBooleanValue()
+                ? StyleFormatter.formatTextKeepCodes(text)
+                : StyleFormatter.formatText(text);
         return formatted.getVisualOrderText();
     };
 

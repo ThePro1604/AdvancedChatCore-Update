@@ -49,6 +49,7 @@ public class StyleFormatter {
     private Style lastTextStyle = null;
     private final FormattingVisitable visitor;
     private final int length;
+    private final boolean keepCodes;
 
     /** Results of different parts of formatting */
     private enum Result {
@@ -71,11 +72,25 @@ public class StyleFormatter {
      * @param length Length of the string
      */
     public StyleFormatter(FormattingVisitable visitor, int length) {
+        this(visitor, length, false);
+    }
+
+    /**
+     * Creates a StyleFormatter for a given length and a {@link FormattingVisitable}
+     *
+     * @param visitor {@link FormattingVisitable} to get updated with each visible character
+     * @param length Length of the string
+     * @param keepCodes Whether the raw formatting code characters (e.g. {@code §a} or {@code §#RRGGBB})
+     *                  should also be sent to the visitor -- styled with the formatting they apply --
+     *                  instead of being consumed silently
+     */
+    public StyleFormatter(FormattingVisitable visitor, int length, boolean keepCodes) {
         this.visitor = visitor;
         this.currentIndex = 0;
         this.realIndex = 0;
         this.currentStyle = Style.EMPTY;
         this.length = length;
+        this.keepCodes = keepCodes;
     }
 
     /** Sends the current character with the current information to the visitor. */
@@ -162,6 +177,7 @@ public class StyleFormatter {
                 nextChar = string.charAt(i + 1);
             }
             if (c == '§') {
+                int codeStart = i;
                 skipBy = 0;
                 switch (updateSection(textStyle, nextChar, string.substring(i + 1))) {
                     case SKIP:
@@ -172,6 +188,14 @@ public class StyleFormatter {
                         i++;
                 }
                 i += skipBy;
+                if (keepCodes) {
+                    // Emit the raw code characters (e.g. "§a" or "§#RRGGBB") themselves, styled
+                    // with the formatting they just applied, instead of consuming them silently.
+                    for (int j = codeStart; j <= i; j++) {
+                        sendToVisitor(string.charAt(j), textStyle);
+                        realIndex++;
+                    }
+                }
             } else if (sendToVisitor(c, textStyle)) {
                 realIndex++;
             } else {
@@ -204,6 +228,33 @@ public class StyleFormatter {
                             return true;
                         },
                         length);
+        text.visit(formatter::updateStyle, Style.EMPTY);
+
+        return flattenText(t);
+    }
+
+    /**
+     * Formats Component that contains styling data as well as formatting symbols, same as {@link
+     * #formatText(Component)}, but keeps the raw formatting code characters (e.g. {@code &a} converted
+     * to {@code §a}, or {@code §#RRGGBB}) visible in the output instead of stripping them, while still
+     * applying the color/formatting they specify.
+     *
+     * @param text Component to reformat
+     * @return Formatted Component with formatting codes still visible
+     */
+    public static MutableComponent formatTextKeepCodes(Component text) {
+        String originalString = text.getString();
+        MutableComponent t = Component.empty();
+        int length = originalString.length();
+
+        StyleFormatter formatter =
+                new StyleFormatter(
+                        (c, index, formattedIndex, style, formattedStyle) -> {
+                            t.append(Component.literal(String.valueOf(c)).withStyle(formattedStyle));
+                            return true;
+                        },
+                        length,
+                        true);
         text.visit(formatter::updateStyle, Style.EMPTY);
 
         return flattenText(t);
