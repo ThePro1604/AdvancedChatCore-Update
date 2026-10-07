@@ -1,5 +1,6 @@
 package io.github.thepro1604.advancedchatcore.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import fi.dy.masa.malilib.gui.widgets.WidgetBase;
 import fi.dy.masa.malilib.render.GuiContext;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -77,7 +78,7 @@ public class ContextMenu extends WidgetBase {
 
     @Override
     protected boolean onMouseClickedImpl(MouseButtonEvent click, boolean doubled) {
-        if (click.button() != 0) {
+        if (click.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         if (hoveredEntry == null) {
