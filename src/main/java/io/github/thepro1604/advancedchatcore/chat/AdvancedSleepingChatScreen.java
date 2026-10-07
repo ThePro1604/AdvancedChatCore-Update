@@ -7,9 +7,9 @@
  */
 package io.github.thepro1604.advancedchatcore.chat;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
-import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.input.KeyEvent;
@@ -39,9 +39,9 @@ public class AdvancedSleepingChatScreen extends AdvancedChatScreen  {
     }
 
     public boolean keyPressed(KeyEvent input) {
-        if (input.key() == KeyCodes.KEY_ESCAPE) {
+        if (input.key() == InputConstants.KEY_ESCAPE) {
             this.stopSleeping();
-        } else if (input.key() == KeyCodes.KEY_ENTER || input.key() == KeyCodes.KEY_KP_ENTER) {
+        } else if (input.key() == InputConstants.KEY_RETURN || input.key() == InputConstants.KEY_NUMPADENTER) {
             String string = this.chatField.getText().trim();
             if (!string.isEmpty()) {
                 MessageSender.getInstance().sendMessage(string);

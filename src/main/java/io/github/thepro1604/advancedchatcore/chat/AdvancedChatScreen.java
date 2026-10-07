@@ -14,7 +14,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.data.Color4f;
 import io.github.thepro1604.advancedchatcore.AdvancedChatCore;
 import io.github.thepro1604.advancedchatcore.config.ConfigStorage;
@@ -221,7 +220,7 @@ public class AdvancedChatScreen extends GuiBase {
     @Override
     public boolean keyReleased(KeyEvent input) {
         if (passEvents) {
-            InputConstants.Key key = InputConstants.Type.KEYSYM.getOrCreate(input.key());
+            InputConstants.Key key = InputConstants.getKey(input);
             KeyMapping.set(key, false);
         }
         return false;
@@ -238,12 +237,12 @@ public class AdvancedChatScreen extends GuiBase {
                 return true;
             }
         }
-        if (input.key() == KeyCodes.KEY_ESCAPE) {
+        if (input.key() == InputConstants.KEY_ESCAPE) {
             // Exit out
             GuiBase.openGui(null);
             return true;
         }
-        if (input.key() == KeyCodes.KEY_ENTER || input.key() == KeyCodes.KEY_KP_ENTER) {
+        if (input.key() == InputConstants.KEY_RETURN || input.key() == InputConstants.KEY_NUMPADENTER) {
             String string = this.chatField.getText().trim();
             // Strip message and send
             MessageSender.getInstance().sendMessage(string);
@@ -253,23 +252,23 @@ public class AdvancedChatScreen extends GuiBase {
             GuiBase.openGui(null);
             return true;
         }
-        if (input.key() == KeyCodes.KEY_UP) {
+        if (input.key() == InputConstants.KEY_UP) {
             // Go through previous history
             this.setChatFromHistory(-1);
             return true;
         }
-        if (input.key() == KeyCodes.KEY_DOWN) {
+        if (input.key() == InputConstants.KEY_DOWN) {
             // Go through previous history
             this.setChatFromHistory(1);
             return true;
         }
-        if (input.key() == KeyCodes.KEY_PAGE_UP) {
+        if (input.key() == InputConstants.KEY_PAGEUP) {
             // Scroll
             // TODO: verify getVisibleLineCount() in ChatComponent 26.1
             Minecraft.getInstance().gui.hud.getChat().scrollChat(Minecraft.getInstance().gui.hud.getChat().getLinesPerPage() - 1);
             return true;
         }
-        if (input.key() == KeyCodes.KEY_PAGE_DOWN) {
+        if (input.key() == InputConstants.KEY_PAGEDOWN) {
             // Scroll
             // TODO: verify getVisibleLineCount() in ChatComponent 26.1
             Minecraft.getInstance().gui.hud.getChat().scrollChat(-(Minecraft.getInstance().gui.hud.getChat().getLinesPerPage() - 1));
@@ -277,7 +276,7 @@ public class AdvancedChatScreen extends GuiBase {
         }
         if (passEvents) {
             this.chatField.setText("");
-            InputConstants.Key key = InputConstants.Type.KEYSYM.getOrCreate(input.key());
+            InputConstants.Key key = InputConstants.getKey(input);
             KeyMapping.set(key, true);
             KeyMapping.click(key);
             return true;
@@ -380,7 +379,7 @@ public class AdvancedChatScreen extends GuiBase {
             }
             GuiBase.openGui(null);
         } else if (event instanceof ClickEvent.OpenUrl openUrl) {
-            net.minecraft.util.Util.getPlatform().openUri(openUrl.uri());
+            com.mojang.blaze3d.Blaze3D.openUri(openUrl.uri());
         } else if (event instanceof ClickEvent.SuggestCommand suggest) {
             chatField.setText(suggest.command());
         } else if (event instanceof ClickEvent.CopyToClipboard copy) {

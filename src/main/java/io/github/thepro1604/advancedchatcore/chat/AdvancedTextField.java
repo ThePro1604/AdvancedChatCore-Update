@@ -7,12 +7,12 @@
  */
 package io.github.thepro1604.advancedchatcore.chat;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.context.CommandContextBuilder;
 import com.mojang.brigadier.context.ParsedCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
-import fi.dy.masa.malilib.util.KeyCodes;
 import io.github.thepro1604.advancedchatcore.config.ConfigStorage;
 import io.github.thepro1604.advancedchatcore.util.*;
 import net.minecraft.client.Minecraft;
@@ -155,7 +155,7 @@ public class AdvancedTextField extends EditBox {
     }
 
     public static boolean isUndo(KeyEvent input) {
-        return input.key() == KeyCodes.KEY_Z && (input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0 && (input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_ALT) == 0;
+        return input.keycode() == InputConstants.KEYCODE_Z && (input.modifiers() & InputConstants.MOD_CONTROL) != 0 && (input.modifiers() & InputConstants.MOD_ALT) == 0;
     }
 
     public void undo() {
@@ -377,7 +377,7 @@ public boolean keyPressed(KeyEvent input) {
         if (!isUndo(input)) {
             return super.keyPressed(input);
         }
-        if ((input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0) {
+        if ((input.modifiers() & InputConstants.MOD_SHIFT) != 0) {
             redo();
         } else {
             undo();
