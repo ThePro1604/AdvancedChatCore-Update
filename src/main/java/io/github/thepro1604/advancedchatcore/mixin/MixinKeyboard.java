@@ -22,8 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MixinKeyboard {
 
     @Inject(
-            method = "processF3",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;clear(Z)V"),
+            method = "handleDebugKeys",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;clearMessages(Z)V"),
             require = 0)
     public void processF3Chat(KeyEvent keyEvent, CallbackInfoReturnable<Boolean> cir) {
         // Make it so that history can still be cleared
